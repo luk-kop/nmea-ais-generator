@@ -68,14 +68,23 @@ def test_aismsg_bits_to_num():
 
 
 def test_aismsg_sixbit_decimal_to_ascii_correct():
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=0) == 48
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=13) == 61
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=33) == 89
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=40) == 96
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=41) == 97
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=45) == 101
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=59) == 115
-    assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=63) == 119
+    decimal_to_ascii = {
+        0: 48,
+        13: 61,
+        24: 72,
+        32: 80,
+        33: 81,
+        36: 84,
+        39: 87,
+        40: 96,
+        41: 97,
+        45: 101,
+        55: 111,
+        59: 115,
+        63: 119
+    }
+    for decimal, ascii in decimal_to_ascii.items():
+        assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=decimal) == ascii
 
 
 def test_aismsg_sixbit_decimal_to_ascii_incorrect():
@@ -83,4 +92,22 @@ def test_aismsg_sixbit_decimal_to_ascii_incorrect():
         AisMsgType1.sixbit_decimal_to_ascii(decimal_num=-1)
     with pytest.raises(Exception):
         AisMsgType1.sixbit_decimal_to_ascii(decimal_num=64)
+
+
+def test_aismsg_ascii_to_char():
+    assert AisMsgType1.ascii_to_char(ascii_code=64) == '@'
+    assert AisMsgType1.ascii_to_char(ascii_code=48) == '0'
+    assert AisMsgType1.ascii_to_char(ascii_code=119) == 'w'
+
+
+def test_aismsg_encode():
+    msg = AisMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
+    desired_payload = '133m@ogP00PD;88MD5MTDww@0D7k'
+    assert msg.encode() == desired_payload
+
+
+def test_aismsg_str():
+    msg = AisMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
+    desired_output = '!AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@0D7k,0*44\r\n'
+    assert str(msg) == desired_output
 

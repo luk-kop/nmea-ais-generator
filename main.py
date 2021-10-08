@@ -15,37 +15,25 @@ def check_sum(data: str):
     return f'0{hex_str}'.upper()
 
 
-def char_to_ascii(char: str) -> int:
-    """
-    Returns ACSII code of provided char.
-    """
-    return bytearray(char, encoding='utf-8')[0]
-
-
-def minus(ascii_code: int) -> int:
-    if ascii_code < 0 or 87 < ascii_code < 96:
-        return
-    new_code = ascii_code - 48
-    if new_code > 40:
-        new_code -= 8
-    return new_code
-
-
 class AisMsgType1:
+    """
+
+    Example: !AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46
+    """
     def __init__(self, mmsi: str,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60):
         # total 168 in one AIVDM sentence
         self.msg_type = '000001'        # 6
         self.repeat_indicator = '00'    # 2
         self.mmsi = mmsi                # 30
         self.nav_status = nav_status    # 4
-        self.rot = '10000000'  # 8
+        self.rot = '10000000'           # 8
         self.speed = speed              # 10
         self.accuracy = '1'             # 1
         self.lon = lon                  # 28
         self.lat = lat                  # 27
         self.course = course            # 12
         self.heading = '111111111'      # 9
-        self.timestamp = timestamp             # 6
+        self.timestamp = timestamp      # 6
         self.maneuver = '00'            # 2
         self.spare = '000'              # 3
         self.raim = '0'                 # 1
@@ -112,6 +100,9 @@ class AisMsgType1:
 
     @property
     def payload_bits(self) -> str:
+        """
+        Returns msg payload as a bit string.
+        """
         return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.nav_status}{self.rot}{self.speed}' \
             f'{self.accuracy}{self.lon}{self.lat}{self.course}{self.heading}{self.timestamp}{self.maneuver}' \
             f'{self.spare}{self.raim}{self.radio_status}'
@@ -119,9 +110,21 @@ class AisMsgType1:
     @property
     def _payload_sixbits_list(self) -> list:
         """
-        Bits payload as a list of six-character (bits) elements.
+        Bits payload as a list of six-character (bits) items.
         """
         return textwrap.wrap(self.payload_bits, 6)
+
+    def encode(self):
+        """
+        Returns message payload in ASCII string.
+        """
+        payload = ''
+        for item in self._payload_sixbits_list:
+            decimal_num = self.bits_to_num(item)
+            ascii_code = self.sixbit_decimal_to_ascii(decimal_num=decimal_num)
+            payload_char = self.ascii_to_char(ascii_code=ascii_code)
+            payload += payload_char
+        return payload
 
     @staticmethod
     def num_to_bits(num: int, chars_num: int) -> str:
@@ -140,16 +143,29 @@ class AisMsgType1:
     @staticmethod
     def sixbit_decimal_to_ascii(decimal_num: int):
         """
-        Converts six-bit decimal to ASCII num.
+        Converts six-bit decimal to ASCII code.
         """
         if decimal_num < 0 or decimal_num > 63:
             raise Exception('Wrong decimal number')
-        if decimal_num + 8 > 40:
+        if decimal_num not in range(33,40) and decimal_num + 8 > 40:
             decimal_num += 8
-        ascii_num = decimal_num + 48
-        return ascii_num
+        ascii_code = decimal_num + 48
+        return ascii_code
+
+    @staticmethod
+    def ascii_to_char(ascii_code: int) -> str:
+        """
+        Converts ASCII code to ASCII char.
+        """
+        return chr(ascii_code)
+
+    def __str__(self) -> str:
+        nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
+        return f'!{nmea_output}*{check_sum(nmea_output)}\r\n'
 
 
 if __name__ == '__main__':
-    pass
+    msg = AisMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
+    print(msg)
+
 
