@@ -17,11 +17,12 @@ def check_sum(data: str):
 
 class AisMsgType1:
     """
-
+    Position report
+    Total 168 bits in one AIVDM msg type 1 payload
     Example: !AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46
     """
     def __init__(self, mmsi: str,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60):
-        # total 168 in one AIVDM sentence
+
         self.msg_type = '000001'        # 6
         self.repeat_indicator = '00'    # 2
         self.mmsi = mmsi                # 30
@@ -162,6 +163,38 @@ class AisMsgType1:
     def __str__(self) -> str:
         nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
         return f'!{nmea_output}*{check_sum(nmea_output)}\r\n'
+
+
+class AisMsgType5:
+    """
+    Static and voyage related data
+    Total 424 bits in one AIVDM msg type 1 payload
+    Example:
+    """
+    def __init__(self, mmsi: str, imo: int, call_sign: str, ship_name: str, ship_type: int, eta: dict, destination: str):
+        self.msg_type = '000101'  # 6
+        self.repeat_indicator = '00'  # 2
+        self.mmsi = mmsi  # 30
+        self.ais_version = '10'
+        self.imo = imo
+        self.call_sign = call_sign
+        self.ship_name = ship_name
+        self.ship_type = ship_type  # 1-99
+        # dimension
+        self.to_bow = ''
+        self.to_stern = ''
+        self.to_stern = ''
+        self.to_port = ''
+        self.pos_fix_type = '0001'  # GPS
+        self.eta = eta
+        # self.eta_month = ''         # 1-12
+        # self.eta_day = ''           # 1-31
+        # self.eta_hour = ''          # 0-23
+        # self.eta_minute = ''        # 0-59
+        self.draught = ''
+        self.destination = destination
+        self.dte = '0'
+        self.spare = '0'
 
 
 if __name__ == '__main__':
