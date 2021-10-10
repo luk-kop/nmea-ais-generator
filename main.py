@@ -11,22 +11,27 @@ class AisMsgType1:
     Payload example: 133m@ogP00PD;88MD5MTDww@2D7k
     """
     def __init__(self, mmsi: int,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60) -> None:
-        self.msg_type = '000001'        # 6
-        self.repeat_indicator = '00'    # 2
-        self.mmsi = mmsi                # 30
-        self.nav_status = nav_status    # 4
-        self.rot = '10000000'           # 8
-        self.speed = speed              # 10
-        self.accuracy = '1'             # 1
-        self.lon = lon                  # 28
-        self.lat = lat                  # 27
-        self.course = course            # 12
-        self.heading = '111111111'      # 9
+        self.msg_type = convert_int_to_bits(num=1, bits_count=6)
+        self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
+        self.mmsi = mmsi
+        self.nav_status = nav_status
+        # ROT - default value, no turn info available (128)
+        self.rot = convert_int_to_bits(num=128, bits_count=8)
+        self.speed = speed
+        # Position accuracy - high (1)
+        self.accuracy = convert_int_to_bits(num=1, bits_count=1)
+        self.lon = lon
+        self.lat = lat
+        self.course = course
+        # True heading - default value, not available (511)
+        self.heading = convert_int_to_bits(num=511, bits_count=9)
         self.timestamp = timestamp      # 6
-        self.maneuver = '00'            # 2
-        self.spare = '000'              # 3
-        self.raim = '0'                 # 1
-        self.radio_status = '0010100000111110011'          # 19 SOTDMA
+        self.maneuver = convert_int_to_bits(num=0, bits_count=2)
+        self.spare = convert_int_to_bits(num=0, bits_count=3)
+        # RAIM - not in use (0)
+        self.raim = convert_int_to_bits(num=0, bits_count=1)
+        # Dummy SOTDMA data
+        self.radio_status = '0010100000111110011'
 
     @property
     def mmsi(self) -> str:
