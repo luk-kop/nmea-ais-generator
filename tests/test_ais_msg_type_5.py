@@ -209,3 +209,17 @@ def test_aismsg_draught_above_incorrect(dummy_ais_msg_type_5):
     msg = dummy_ais_msg_type_5
     with pytest.raises(Exception):
         msg.draught = -1
+
+
+def test_aismsg_destination(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    assert len(msg.destination) == 120
+    assert msg.destination == '001110000101010111100000011001001111010010001011100000100000100000100000100000' \
+                              '100000100000100000100000100000100000100000'
+
+
+def test_aismsg_destination_empty(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    msg.destination = ''
+    assert len(msg.destination) == 120
+    assert msg.destination == '000000' * 20

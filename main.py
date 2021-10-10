@@ -144,6 +144,7 @@ class AisMsgType5:
         self.ship_name = ship_name
         self.ship_type = ship_type  # 1-99
         self.dimension = dimension  # 30 bits
+        # Type of Position fixing device - GPS (1)
         self.pos_fix_type = convert_int_to_bits(num=1, bits_count=4)  # 4 bits - GPS
         self.eta = eta
         self.draught = draught
@@ -219,8 +220,8 @@ class AisMsgType5:
             # Convert ASCII6 code to bits.
             six_bits: str = convert_int_to_bits(num=ascii6_code, bits_count=6)
             ship_name_bits += six_bits
-        if len(ship_name_bits) < required_bit_count:
-            ship_name_bits, self.fill_bits = add_padding_0_bits(bits_string=ship_name_bits, required_length=required_bit_count)
+        # if len(ship_name_bits) < required_bit_count:
+        #     ship_name_bits, self.fill_bits = add_padding_0_bits(bits_string=ship_name_bits, required_length=required_bit_count)
         self._ship_name = ship_name_bits
 
     @property
@@ -261,6 +262,33 @@ class AisMsgType5:
             value = 25.5
         self._draught = convert_int_to_bits(num=int(value * 10), bits_count=8)
 
+    @property
+    def destination(self) -> str:
+        return self._destination
+
+    @destination.setter
+    def destination(self, destination) -> None:
+        # TODO: enum for counts
+        required_bit_count = 120
+        required_char_count = 20
+        if len(destination) not in range(0, required_char_count + 1):
+            raise ValueError(f'Invalid destination {destination} (max {required_char_count} chars).')
+        if len(destination) == 0:
+            destination = '@' * required_char_count
+        else:
+            # call_sign with padding, if necessary
+            destination = add_padding(text=destination, required_length=required_char_count)
+        destination_bits = ''
+        for char in destination:
+            # Get ASCII6 code from ASCII char.
+            ascii6_code: int = convert_ascii_char_to_ascii6_code(char=char)
+            # Convert ASCII6 code to bits.
+            six_bits: str = convert_int_to_bits(num=ascii6_code, bits_count=6)
+            destination_bits += six_bits
+        # if len(destination_bits) < required_bit_count:
+        #     destination_bits, self.fill_bits = add_padding_0_bits(bits_string=destination_bits,
+        #                                                         required_length=required_bit_count)
+        self._destination = destination_bits
 
 class ShipDimension:
     """
