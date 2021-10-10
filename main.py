@@ -1,19 +1,66 @@
+from abc import ABC, abstractmethod
 import textwrap
 
 from utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, get_ascii_code_of_char, add_padding, add_padding_0_bits, nmea_check_sum
 
 
-class AisMsgType1:
+class AisMsg(ABC):
+    """
+    Class represent an abstract class which acts as a parent class for other AIS msgs.
+    """
+    def __init__(self, mmsi: int) -> None:
+        self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
+        self.mmsi = mmsi
+        # Number of fill bits requires to pad the data payload to a 6 bit boundary (range 0-5).
+        self.fill_bits = 0
+
+    @abstractmethod
+    def payload_bits(self) -> None:
+        pass
+
+    @property
+    def mmsi(self) -> str:
+        return self._mmsi
+
+    @mmsi.setter
+    def mmsi(self, mmsi) -> None:
+        self._mmsi = convert_int_to_bits(num=mmsi, bits_count=30)
+
+    @property
+    def _payload_sixbits_list(self) -> list:
+        """
+        Returns msg payload as a list of six-character (bits) items.
+        """
+        return textwrap.wrap(self.payload_bits, 6)
+
+    def encode(self) -> str:
+        """
+        Returns message payload as a string of ASCII chars (AIVDM Payload Armoring).
+        Adds fill-bits (padding) to last six-bit item, if necessary.
+        """
+        payload = ''
+        for item in self._payload_sixbits_list:
+            # Add fill-bits (padding) to last six-bit item, if necessary
+            while len(item) < 6:
+                item += '0'
+                self.fill_bits += 1
+            decimal_num = convert_bits_to_int(bits=item)
+            ascii_code = convert_decimal_to_ascii_code(decimal_num=decimal_num)
+            payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
+            payload += payload_char
+        return payload
+
+
+class AisMsgType1(AisMsg):
     """
     Class represents payload of AIS msg type 1 (Position Report Class A).
     Total number of bits in one AIS msg type 1 payload - 168 bits.
     Payload example: 133m@ogP00PD;88MD5MTDww@2D7k
     """
     def __init__(self, mmsi: int,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60) -> None:
+        super().__init__(mmsi)
         self.msg_type = convert_int_to_bits(num=1, bits_count=6)
-        self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
-        self.mmsi = mmsi
         self.nav_status = nav_status
         # ROT - default value, no turn info available (128)
         self.rot = convert_int_to_bits(num=128, bits_count=8)
@@ -32,14 +79,6 @@ class AisMsgType1:
         self.raim = convert_int_to_bits(num=0, bits_count=1)
         # Dummy SOTDMA data
         self.radio_status = '0010100000111110011'
-
-    @property
-    def mmsi(self) -> str:
-        return self._mmsi
-
-    @mmsi.setter
-    def mmsi(self, mmsi) -> None:
-        self._mmsi = convert_int_to_bits(num=mmsi, bits_count=30)
 
     @property
     def nav_status(self) -> str:
@@ -104,41 +143,21 @@ class AisMsgType1:
             f'{self.accuracy}{self.lon}{self.lat}{self.course}{self.heading}{self.timestamp}{self.maneuver}' \
             f'{self.spare}{self.raim}{self.radio_status}'
 
-    @property
-    def _payload_sixbits_list(self) -> list:
-        """
-        Returns msg payload as a list of six-character (bits) items.
-        """
-        return textwrap.wrap(self.payload_bits, 6)
-
-    def encode(self) -> str:
-        """
-        Returns message payload as a string of ASCII chars (AIVDM Payload Armoring)
-        """
-        payload = ''
-        for item in self._payload_sixbits_list:
-            decimal_num = convert_bits_to_int(bits=item)
-            ascii_code = convert_decimal_to_ascii_code(decimal_num=decimal_num)
-            payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
-            payload += payload_char
-        return payload
-
     def __str__(self) -> str:
         nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
         return f'!{nmea_output}*{nmea_check_sum(nmea_output)}\r\n'
 
 
-class AisMsgType5:
+class AisMsgType5(AisMsg):
     """
     Class represents payload of AIS msg type 5 (Static and Voyage Related Data).
-    Total number of bits in one AIS msg type 5 payload - 424 bits.
+    Total number of bits in one AIS msg type 5 payload - 424 bits (without fill_bits).
     The msg payload will be split into two AIVDM messages due to the maximum NMEA frame size limitation (82 chars).
     Payload example: 55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880
     """
     def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: dict, eta: dict, draught: float, destination: str):
+        super().__init__(mmsi)
         self.msg_type = convert_int_to_bits(num=5, bits_count=6)
-        self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
-        self.mmsi = mmsi
         # AIS version - station compliant with ITU-R M.1371-5 (2)
         self.ais_version = convert_int_to_bits(num=2, bits_count=2)
         self.imo = imo
@@ -154,16 +173,6 @@ class AisMsgType5:
         # DTE - ready (0)
         self.dte = convert_int_to_bits(num=0, bits_count=1)
         self.spare = convert_int_to_bits(num=0, bits_count=1)
-        # Number of fill bits requires to pad the data payload to a 6 bit boundary (range 0-5).
-        self.fill_bits = 0
-
-    @property
-    def mmsi(self) -> str:
-        return self._mmsi
-
-    @mmsi.setter
-    def mmsi(self, value) -> None:
-        self._mmsi = convert_int_to_bits(num=value, bits_count=30)
 
     @property
     def imo(self) -> str:
@@ -223,8 +232,6 @@ class AisMsgType5:
             # Convert ASCII6 code to bits.
             six_bits: str = convert_int_to_bits(num=ascii6_code, bits_count=6)
             ship_name_bits += six_bits
-        # if len(ship_name_bits) < required_bit_count:
-        #     ship_name_bits, self.fill_bits = add_padding_0_bits(bits_string=ship_name_bits, required_length=required_bit_count)
         self._ship_name = ship_name_bits
 
     @property
@@ -288,9 +295,6 @@ class AisMsgType5:
             # Convert ASCII6 code to bits.
             six_bits: str = convert_int_to_bits(num=ascii6_code, bits_count=6)
             destination_bits += six_bits
-        # if len(destination_bits) < required_bit_count:
-        #     destination_bits, self.fill_bits = add_padding_0_bits(bits_string=destination_bits,
-        #                                                         required_length=required_bit_count)
         self._destination = destination_bits
 
     @property
@@ -302,30 +306,6 @@ class AisMsgType5:
         return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.ais_version}{self.imo}{self.call_sign}' \
                f'{self.ship_name}{self.ship_type}{self.dimension}{self.pos_fix_type}{self.eta}{self.draught}' \
                f'{self.destination}{self.dte}{self.spare}'
-
-    @property
-    def _payload_sixbits_list(self) -> list:
-        """
-        Returns msg payload as a list of six-character (bits) items.
-        """
-        return textwrap.wrap(self.payload_bits, 6)
-
-    def encode(self) -> str:
-        """
-        Returns message payload as a string of ASCII chars (AIVDM Payload Armoring).
-        Adds fill-bits (padding) to last six-bit item, if necessary.
-        """
-        payload = ''
-        for item in self._payload_sixbits_list:
-            # Add fill-bits (padding) to last six-bit item, if necessary
-            while len(item) < 6:
-                item += '0'
-                self.fill_bits += 1
-            decimal_num = convert_bits_to_int(bits=item)
-            ascii_code = convert_decimal_to_ascii_code(decimal_num=decimal_num)
-            payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
-            payload += payload_char
-        return payload
 
 
 class ShipDimension:
