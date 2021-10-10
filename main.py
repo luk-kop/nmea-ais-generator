@@ -1,5 +1,9 @@
 # NMEA 0183
 import textwrap
+from dataclasses import dataclass
+
+from utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
+    convert_ascii_char_to_ascii6_code, get_ascii_code_of_char, add_padding, add_padding_0_bits
 
 
 def check_sum(data: str):
@@ -17,12 +21,11 @@ def check_sum(data: str):
 
 class AisMsgType1:
     """
-    Position report
-    Total 168 bits in one AIVDM msg type 1 payload
-    Example: !AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@2D7k,0*46
+    Class represents payload of AIS msg type 1 (Position Report Class A).
+    Total number of bits in one AIS msg type 1 payload - 168 bits.
+    Payload example: 133m@ogP00PD;88MD5MTDww@2D7k
     """
-    def __init__(self, mmsi: str,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60):
-
+    def __init__(self, mmsi: int,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60) -> None:
         self.msg_type = '000001'        # 6
         self.repeat_indicator = '00'    # 2
         self.mmsi = mmsi                # 30
@@ -46,7 +49,7 @@ class AisMsgType1:
 
     @mmsi.setter
     def mmsi(self, mmsi) -> None:
-        self._mmsi = self.num_to_bits(num=mmsi, chars_num=30)
+        self._mmsi = convert_int_to_bits(num=mmsi, bits_count=30)
 
     @property
     def nav_status(self) -> str:
@@ -54,7 +57,7 @@ class AisMsgType1:
 
     @nav_status.setter
     def nav_status(self, nav_status) -> None:
-        self._nav_status = self.num_to_bits(num=nav_status, chars_num=4)
+        self._nav_status = convert_int_to_bits(num=nav_status, bits_count=4)
 
     @property
     def lon(self) -> str:
@@ -62,7 +65,7 @@ class AisMsgType1:
 
     @lon.setter
     def lon(self, lon) -> None:
-        self._lon = self.num_to_bits(num=int(lon * 600000), chars_num=28)
+        self._lon = convert_int_to_bits(num=int(lon * 600000), bits_count=28)
 
     @property
     def lat(self) -> str:
@@ -70,7 +73,7 @@ class AisMsgType1:
 
     @lat.setter
     def lat(self, lat) -> None:
-        self._lat = self.num_to_bits(num=int(lat * 600000), chars_num=27)
+        self._lat = convert_int_to_bits(num=int(lat * 600000), bits_count=27)
 
     @property
     def course(self) -> str:
@@ -78,8 +81,9 @@ class AisMsgType1:
 
     @course.setter
     def course(self, course) -> None:
-        # TODO: 0-3599
-        self._course = self.num_to_bits(num=int(course * 10), chars_num=12)
+        if course < 0 or course > 360:
+            raise ValueError(f'Invalid course {course}. Should be in 0-360 range.')
+        self._course = convert_int_to_bits(num=int(course * 10), bits_count=12)
 
     @property
     def speed(self) -> str:
@@ -87,8 +91,9 @@ class AisMsgType1:
 
     @speed.setter
     def speed(self, speed) -> None:
-        # TODO: 0-102.2 knots
-        self._speed = self.num_to_bits(num=int(speed * 10), chars_num=10)
+        if speed < 0 or speed > 102.2:
+            raise ValueError(f'Invalid speed {speed}. Should be in 0-102.2 range.')
+        self._speed = convert_int_to_bits(num=int(speed * 10), bits_count=10)
 
     @property
     def timestamp(self) -> str:
@@ -96,8 +101,9 @@ class AisMsgType1:
 
     @timestamp.setter
     def timestamp(self, timestamp) -> None:
-        # TODO: 0-60
-        self._timestamp = self.num_to_bits(num=timestamp, chars_num=6)
+        if timestamp not in range(0, 61):
+            raise ValueError(f'Invalid timestamp {timestamp}. Should be in 0-60 range.')
+        self._timestamp = convert_int_to_bits(num=timestamp, bits_count=6)
 
     @property
     def payload_bits(self) -> str:
@@ -111,54 +117,21 @@ class AisMsgType1:
     @property
     def _payload_sixbits_list(self) -> list:
         """
-        Bits payload as a list of six-character (bits) items.
+        Returns msg payload as a list of six-character (bits) items.
         """
         return textwrap.wrap(self.payload_bits, 6)
 
-    def encode(self):
+    def encode(self) -> str:
         """
-        Returns message payload in ASCII string.
+        Returns message payload as a string of ASCII chars (AIVDM Payload Armoring)
         """
         payload = ''
         for item in self._payload_sixbits_list:
-            decimal_num = self.bits_to_num(item)
-            ascii_code = self.sixbit_decimal_to_ascii(decimal_num=decimal_num)
-            payload_char = self.ascii_to_char(ascii_code=ascii_code)
+            decimal_num = convert_bits_to_int(bits=item)
+            ascii_code = convert_decimal_to_ascii_code(decimal_num=decimal_num)
+            payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
             payload += payload_char
         return payload
-
-    @staticmethod
-    def num_to_bits(num: int, chars_num: int) -> str:
-        """
-        Converts int to bits.
-        """
-        return format(num, f'0{chars_num}b')
-
-    @staticmethod
-    def bits_to_num(bits: str) -> int:
-        """
-        Converts bits to int.
-        """
-        return int(bits, 2)
-
-    @staticmethod
-    def sixbit_decimal_to_ascii(decimal_num: int):
-        """
-        Converts six-bit decimal to ASCII code.
-        """
-        if decimal_num < 0 or decimal_num > 63:
-            raise Exception('Wrong decimal number')
-        if decimal_num not in range(33,40) and decimal_num + 8 > 40:
-            decimal_num += 8
-        ascii_code = decimal_num + 48
-        return ascii_code
-
-    @staticmethod
-    def ascii_to_char(ascii_code: int) -> str:
-        """
-        Converts ASCII code to ASCII char.
-        """
-        return chr(ascii_code)
 
     def __str__(self) -> str:
         nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
@@ -167,25 +140,22 @@ class AisMsgType1:
 
 class AisMsgType5:
     """
-    Static and voyage related data
-    Total 424 bits in one AIVDM msg type 1 payload
-    Example:
+    Class represents payload of AIS msg type 5 (Static and Voyage Related Data).
+    Total number of bits in one AIS msg type 5 payload - 424 bits.
+    The msg payload will be split into two AIVDM messages due to the maximum NMEA frame size limitation (82 chars).
+    Payload example: 55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880
     """
-    def __init__(self, mmsi: str, imo: int, call_sign: str, ship_name: str, ship_type: int, eta: dict, destination: str):
-        self.msg_type = '000101'  # 6
-        self.repeat_indicator = '00'  # 2
+    def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: dict, eta: dict, destination: str):
+        self.msg_type = convert_int_to_bits(num=5, bits_count=6)
+        self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
         self.mmsi = mmsi  # 30
-        self.ais_version = '10'
+        self.ais_version = convert_int_to_bits(num=2, bits_count=2)
         self.imo = imo
         self.call_sign = call_sign
         self.ship_name = ship_name
         self.ship_type = ship_type  # 1-99
-        # dimension
-        self.to_bow = ''
-        self.to_stern = ''
-        self.to_stern = ''
-        self.to_port = ''
-        self.pos_fix_type = '0001'  # GPS
+        self.dimension = dimension  # 30 bits
+        self.pos_fix_type = convert_int_to_bits(num=1, bits_count=4)  # 4 bits - GPS
         self.eta = eta
         # self.eta_month = ''         # 1-12
         # self.eta_day = ''           # 1-31
@@ -193,12 +163,189 @@ class AisMsgType5:
         # self.eta_minute = ''        # 0-59
         self.draught = ''
         self.destination = destination
-        self.dte = '0'
-        self.spare = '0'
+        self.dte = convert_int_to_bits(num=0, bits_count=1)
+        self.spare = convert_int_to_bits(num=0, bits_count=1)
+        # number of fill bits requires to pad the data payload to a 6 bit boundary (range 0-5).
+        self.fill_bits = 0
+
+    @property
+    def mmsi(self) -> str:
+        return self._mmsi
+
+    @mmsi.setter
+    def mmsi(self, value) -> None:
+        self._mmsi = convert_int_to_bits(num=value, bits_count=30)
+
+    @property
+    def imo(self) -> str:
+        return self._imo
+
+    @imo.setter
+    def imo(self, value) -> None:
+        self._imo = convert_int_to_bits(num=value, bits_count=30)
+
+    @property
+    def call_sign(self) -> str:
+        return self._call_sign
+
+    @call_sign.setter
+    def call_sign(self, call_sign) -> None:
+        # TODO: enum for counts
+        required_bit_count = 42
+        required_char_count = 7
+        if len(call_sign) not in range(0, required_char_count + 1):
+            raise ValueError(f'Invalid call_sign {call_sign} (max {required_char_count} chars).')
+        if len(call_sign) == 0:
+            call_sign = '@' * required_char_count
+        else:
+            # call_sign with padding, if necessary
+            call_sign = add_padding(text=call_sign, required_length=required_char_count)
+        call_sign_bits = ''
+        for char in call_sign:
+            # Get ASCII6 code from ASCII char.
+            ascii6_code: int = convert_ascii_char_to_ascii6_code(char=char)
+            # Convert ASCII6 code to bits.
+            six_bits: str = convert_int_to_bits(num=ascii6_code, bits_count=6)
+            call_sign_bits += six_bits
+        if len(call_sign_bits) < required_bit_count:
+            call_sign_bits, self.fill_bits = add_padding_0_bits(bits_string=call_sign_bits, required_length=required_bit_count)
+        self._call_sign = call_sign_bits
+
+    @property
+    def ship_name(self) -> str:
+        return self._ship_name
+
+    @ship_name.setter
+    def ship_name(self, ship_name) -> None:
+        # TODO: enum for counts
+        required_bit_count = 120
+        required_char_count = 20
+        if len(ship_name) not in range(0, required_char_count + 1):
+            raise ValueError(f'Invalid ship_name {ship_name} (max {required_char_count} chars).')
+        if len(ship_name) == 0:
+            ship_name = '@' * required_char_count
+        else:
+            # call_sign with padding, if necessary
+            ship_name = add_padding(text=ship_name, required_length=required_char_count)
+        ship_name_bits = ''
+        for char in ship_name:
+            # Get ASCII6 code from ASCII char.
+            ascii6_code: int = convert_ascii_char_to_ascii6_code(char=char)
+            # Convert ASCII6 code to bits.
+            six_bits: str = convert_int_to_bits(num=ascii6_code, bits_count=6)
+            ship_name_bits += six_bits
+        if len(ship_name_bits) < required_bit_count:
+            ship_name_bits, self.fill_bits = add_padding_0_bits(bits_string=ship_name_bits, required_length=required_bit_count)
+        self._ship_name = ship_name_bits
+
+    @property
+    def ship_type(self) -> str:
+        return self._ship_type
+
+    @ship_type.setter
+    def ship_type(self, value) -> None:
+        if value not in range(1, 100):
+            raise ValueError(f'Invalid ship_type {value}. Should be in 1-99 range.')
+        self._ship_type = convert_int_to_bits(num=value, bits_count=8)
+
+    @property
+    def dimension(self) -> str:
+        return self._dimension
+
+    @dimension.setter
+    def dimension(self, dimension) -> None:
+        self._dimension = ShipDimension(dimension=dimension).bits
+
+
+class ShipDimension:
+    """
+    Class represents the dimension of the ship.
+    All dimensions in meters.
+    """
+    def __init__(self, dimension: dict) -> None:
+        self.to_bow = dimension.get('to_bow', 0)
+        self.to_stern = dimension.get('to_stern', 0)
+        self.to_port = dimension.get('to_port', 0)
+        self.to_starboard = dimension.get('to_starboard', 0)
+
+    @property
+    def to_bow(self) -> int:
+        return self._to_bow
+
+    @to_bow.setter
+    def to_bow(self, value) -> None:
+        if value < 0:
+            raise ValueError(f'Invalid to_bow {value}. Should be 0 or greater.')
+        elif value > 511:
+            self._to_bow = 511
+        else:
+            self._to_bow = value
+
+    @property
+    def to_stern(self) -> int:
+        return self._to_stern
+
+    @to_stern.setter
+    def to_stern(self, value) -> None:
+        if value < 0:
+            raise ValueError(f'Invalid to_stern {value}. Should be 0 or greater.')
+        elif value > 511:
+            self._to_stern= 511
+        else:
+            self._to_stern = value
+
+    @property
+    def to_port(self) -> int:
+        return self._to_port
+
+    @to_port.setter
+    def to_port(self, value) -> None:
+        if value < 0:
+            raise ValueError(f'Invalid to_port {value}. Should be 0 or greater.')
+        elif value > 63:
+            self._to_port = 63
+        else:
+            self._to_port = value
+
+    @property
+    def to_starboard(self) -> int:
+        return self._to_starboard
+
+    @to_starboard.setter
+    def to_starboard(self, value) -> None:
+        if value < 0:
+            raise ValueError(f'Invalid to_starboard {value}. Should be 0 or greater.')
+        elif value > 63:
+            self._to_starboard = 63
+        else:
+            self._to_starboard = value
+
+    @property
+    def bits(self) -> str:
+        dimension_bits = ''
+        for value in [self.to_bow, self.to_stern]:
+            dimension_bits += convert_int_to_bits(num=value, bits_count=9)
+        for value in [self.to_port, self.to_starboard]:
+            dimension_bits += convert_int_to_bits(num=value, bits_count=6)
+        return dimension_bits
 
 
 if __name__ == '__main__':
-    msg = AisMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
+    # Only for tests
+    dimension_dict = {
+        'to_bow': 225,
+        'to_stern': 70,
+        'to_port': 1,
+        'to_starboard': 31
+    }
+    msg = AisMsgType5(mmsi=205344990,
+                      imo=9134270,
+                      call_sign='3FOF8',
+                      ship_name='EVER DIADEM',
+                      ship_type=70,
+                      dimension=dimension_dict,
+                      eta={},
+                      destination='NEW YORK')
     print(msg)
 
 
