@@ -87,7 +87,7 @@ def add_padding_0_bits(bits_string: str, required_length: int) -> tuple:
     return bits_string, extra_0_bits_count
 
 
-def nmea_check_sum(data: str):
+def nmea_check_sum(data: str) -> str:
     """
     Return calculated NMEA checksum.
     """
@@ -101,3 +101,15 @@ def nmea_check_sum(data: str):
     if len(hex_str) == 2:
         return hex_str.upper()
     return f'0{hex_str}'.upper()
+
+
+def convert_ais_payload_to_bits(payload: str) -> str:
+    """
+    Return string of bits from given AIS msg payload.
+    """
+    payload_bits = ''
+    for char in payload:
+        ascii_code = get_ascii_code_of_char(char)
+        decimal = convert_ascii_code_to_decimal(ascii_code)
+        payload_bits += convert_int_to_bits(decimal)
+    return payload_bits

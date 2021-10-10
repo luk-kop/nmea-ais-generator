@@ -9,7 +9,8 @@ from utils import (
     convert_decimal_to_ascii_code,
     convert_ascii_char_to_ascii6_code,
     add_padding,
-    add_padding_0_bits
+    add_padding_0_bits,
+    convert_ais_payload_to_bits
 )
 
 
@@ -159,3 +160,13 @@ def test_add_padding_incorrect():
 
 def test_add_padding_0_bits():
     assert add_padding_0_bits(bits_string='001100', required_length=8) == ('00110000', 2)
+
+
+def test_convert_ais_payload_to_bits():
+    ais_payload = '55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880'
+    ais_payload_bits = '0001010001010011110111011010101001100000000000100010110110000010111110110011000110001111000' \
+                       '11011100010000010000000010101011000010101001010000000010000100100000100010000010100110110000' \
+                       '010000010000010000010000010000010000010000010000001000110011100001001000110000001011111000101' \
+                       '010111101110000000011110100011100001010101111000000110010011110100100010111000001000001000001' \
+                       '000001000001000001000001000001000001000001000001000000000'
+    assert convert_ais_payload_to_bits(payload=ais_payload) == ais_payload_bits

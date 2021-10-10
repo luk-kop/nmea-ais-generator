@@ -16,13 +16,13 @@ def dummy_ship_dimension():
 
 @fixture
 def dummy_ship_eta():
-    dimension_dict = {
+    eta_dict = {
         'month': 5,
         'day': 15,
         'hour': 14,
         'minute': 0
     }
-    return dimension_dict
+    return eta_dict
 
 
 @fixture

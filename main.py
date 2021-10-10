@@ -1,11 +1,7 @@
-# NMEA 0183
 import textwrap
 
 from utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, get_ascii_code_of_char, add_padding, add_padding_0_bits, nmea_check_sum
-
-
-
 
 
 class AisMsgType1:
@@ -137,21 +133,23 @@ class AisMsgType5:
     def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: dict, eta: dict, draught: float, destination: str):
         self.msg_type = convert_int_to_bits(num=5, bits_count=6)
         self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
-        self.mmsi = mmsi  # 30
+        self.mmsi = mmsi
+        # AIS version - station compliant with ITU-R M.1371-5 (2)
         self.ais_version = convert_int_to_bits(num=2, bits_count=2)
         self.imo = imo
         self.call_sign = call_sign
         self.ship_name = ship_name
-        self.ship_type = ship_type  # 1-99
-        self.dimension = dimension  # 30 bits
-        # Type of Position fixing device - GPS (1)
-        self.pos_fix_type = convert_int_to_bits(num=1, bits_count=4)  # 4 bits - GPS
+        self.ship_type = ship_type
+        self.dimension = dimension
+        # Type of position fixing device - GPS (1)
+        self.pos_fix_type = convert_int_to_bits(num=1, bits_count=4)
         self.eta = eta
         self.draught = draught
         self.destination = destination
+        # DTE - ready (0)
         self.dte = convert_int_to_bits(num=0, bits_count=1)
         self.spare = convert_int_to_bits(num=0, bits_count=1)
-        # number of fill bits requires to pad the data payload to a 6 bit boundary (range 0-5).
+        # Number of fill bits requires to pad the data payload to a 6 bit boundary (range 0-5).
         self.fill_bits = 0
 
     @property
@@ -290,6 +288,41 @@ class AisMsgType5:
         #                                                         required_length=required_bit_count)
         self._destination = destination_bits
 
+    @property
+    def payload_bits(self) -> str:
+        """
+        Returns msg payload as a bit string.
+        Payload without fill-bits (padding) added to last six-bit item (nibble).
+        """
+        return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.ais_version}{self.imo}{self.call_sign}' \
+               f'{self.ship_name}{self.ship_type}{self.dimension}{self.pos_fix_type}{self.eta}{self.draught}' \
+               f'{self.destination}{self.dte}{self.spare}'
+
+    @property
+    def _payload_sixbits_list(self) -> list:
+        """
+        Returns msg payload as a list of six-character (bits) items.
+        """
+        return textwrap.wrap(self.payload_bits, 6)
+
+    def encode(self) -> str:
+        """
+        Returns message payload as a string of ASCII chars (AIVDM Payload Armoring).
+        Adds fill-bits (padding) to last six-bit item, if necessary.
+        """
+        payload = ''
+        for item in self._payload_sixbits_list:
+            # Add fill-bits (padding) to last six-bit item, if necessary
+            while len(item) < 6:
+                item += '0'
+                self.fill_bits += 1
+            decimal_num = convert_bits_to_int(bits=item)
+            ascii_code = convert_decimal_to_ascii_code(decimal_num=decimal_num)
+            payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
+            payload += payload_char
+        return payload
+
+
 class ShipDimension:
     """
     Class represents the dimension of the ship.
@@ -426,15 +459,22 @@ if __name__ == '__main__':
         'to_port': 1,
         'to_starboard': 31
     }
+    eta_dict = {
+        'month': 5,
+        'day': 15,
+        'hour': 14,
+        'minute': 0
+    }
     msg = AisMsgType5(mmsi=205344990,
                       imo=9134270,
                       call_sign='3FOF8',
                       ship_name='EVER DIADEM',
                       ship_type=70,
                       dimension=dimension_dict,
-                      eta={},
+                      eta=eta_dict,
                       draught=12.2,
                       destination='NEW YORK')
-    print(msg)
+    print(msg.encode())
+
 
 
