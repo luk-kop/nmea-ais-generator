@@ -1,22 +1,11 @@
 # NMEA 0183
 import textwrap
-from dataclasses import dataclass
 
 from utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
-    convert_ascii_char_to_ascii6_code, get_ascii_code_of_char, add_padding, add_padding_0_bits
+    convert_ascii_char_to_ascii6_code, get_ascii_code_of_char, add_padding, add_padding_0_bits, nmea_check_sum
 
 
-def check_sum(data: str):
-    check_sum: int = 0
-    for char in data:
-        num = bytearray(char, encoding='utf-8')[0]
-        # XOR operation.
-        check_sum = (check_sum ^ num)
-    # Returns only hex digits string without leading 0x.
-    hex_str: str = str(hex(check_sum))[2:]
-    if len(hex_str) == 2:
-        return hex_str.upper()
-    return f'0{hex_str}'.upper()
+
 
 
 class AisMsgType1:
@@ -135,7 +124,7 @@ class AisMsgType1:
 
     def __str__(self) -> str:
         nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
-        return f'!{nmea_output}*{check_sum(nmea_output)}\r\n'
+        return f'!{nmea_output}*{nmea_check_sum(nmea_output)}\r\n'
 
 
 class AisMsgType5:
@@ -145,7 +134,7 @@ class AisMsgType5:
     The msg payload will be split into two AIVDM messages due to the maximum NMEA frame size limitation (82 chars).
     Payload example: 55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880
     """
-    def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: dict, eta: dict, destination: str):
+    def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: dict, eta: dict, draught: float, destination: str):
         self.msg_type = convert_int_to_bits(num=5, bits_count=6)
         self.repeat_indicator = convert_int_to_bits(num=0, bits_count=2)
         self.mmsi = mmsi  # 30
@@ -157,11 +146,7 @@ class AisMsgType5:
         self.dimension = dimension  # 30 bits
         self.pos_fix_type = convert_int_to_bits(num=1, bits_count=4)  # 4 bits - GPS
         self.eta = eta
-        # self.eta_month = ''         # 1-12
-        # self.eta_day = ''           # 1-31
-        # self.eta_hour = ''          # 0-23
-        # self.eta_minute = ''        # 0-59
-        self.draught = ''
+        self.draught = draught
         self.destination = destination
         self.dte = convert_int_to_bits(num=0, bits_count=1)
         self.spare = convert_int_to_bits(num=0, bits_count=1)
@@ -254,7 +239,27 @@ class AisMsgType5:
 
     @dimension.setter
     def dimension(self, dimension) -> None:
-        self._dimension = ShipDimension(dimension=dimension).bits
+        self._dimension = ShipDimension(dimension_data=dimension).bits
+
+    @property
+    def eta(self) -> str:
+        return self._eta
+
+    @eta.setter
+    def eta(self, eta) -> None:
+        self._eta = ShipEta(eta_data=eta).bits
+
+    @property
+    def draught(self) -> str:
+        return self._draught
+
+    @draught.setter
+    def draught(self, value) -> None:
+        if value < 0:
+            raise ValueError(f'Invalid draught {value}. Should be 0 or greater.')
+        elif value > 25.5:
+            value = 25.5
+        self._draught = convert_int_to_bits(num=int(value * 10), bits_count=8)
 
 
 class ShipDimension:
@@ -262,11 +267,11 @@ class ShipDimension:
     Class represents the dimension of the ship.
     All dimensions in meters.
     """
-    def __init__(self, dimension: dict) -> None:
-        self.to_bow = dimension.get('to_bow', 0)
-        self.to_stern = dimension.get('to_stern', 0)
-        self.to_port = dimension.get('to_port', 0)
-        self.to_starboard = dimension.get('to_starboard', 0)
+    def __init__(self, dimension_data: dict) -> None:
+        self.to_bow = dimension_data.get('to_bow', 0)
+        self.to_stern = dimension_data.get('to_stern', 0)
+        self.to_port = dimension_data.get('to_port', 0)
+        self.to_starboard = dimension_data.get('to_starboard', 0)
 
     @property
     def to_bow(self) -> int:
@@ -277,9 +282,8 @@ class ShipDimension:
         if value < 0:
             raise ValueError(f'Invalid to_bow {value}. Should be 0 or greater.')
         elif value > 511:
-            self._to_bow = 511
-        else:
-            self._to_bow = value
+            value = 511
+        self._to_bow = value
 
     @property
     def to_stern(self) -> int:
@@ -290,9 +294,8 @@ class ShipDimension:
         if value < 0:
             raise ValueError(f'Invalid to_stern {value}. Should be 0 or greater.')
         elif value > 511:
-            self._to_stern= 511
-        else:
-            self._to_stern = value
+            value = 511
+        self._to_stern = value
 
     @property
     def to_port(self) -> int:
@@ -303,9 +306,8 @@ class ShipDimension:
         if value < 0:
             raise ValueError(f'Invalid to_port {value}. Should be 0 or greater.')
         elif value > 63:
-            self._to_port = 63
-        else:
-            self._to_port = value
+            value = 63
+        self._to_port = value
 
     @property
     def to_starboard(self) -> int:
@@ -316,9 +318,8 @@ class ShipDimension:
         if value < 0:
             raise ValueError(f'Invalid to_starboard {value}. Should be 0 or greater.')
         elif value > 63:
-            self._to_starboard = 63
-        else:
-            self._to_starboard = value
+            value = 63
+        self._to_starboard = value
 
     @property
     def bits(self) -> str:
@@ -328,6 +329,65 @@ class ShipDimension:
         for value in [self.to_port, self.to_starboard]:
             dimension_bits += convert_int_to_bits(num=value, bits_count=6)
         return dimension_bits
+
+
+class ShipEta:
+    """
+    Class represents ship's Estimated Time of Arrival in UTC.
+    """
+    def __init__(self, eta_data: dict) -> None:
+        self.month = eta_data.get('month', 0)
+        self.day = eta_data.get('day', 0)
+        self.hour = eta_data.get('hour', 24)
+        self.minute = eta_data.get('minute', 60)
+
+    @property
+    def month(self) -> int:
+        return self._month
+
+    @month.setter
+    def month(self, value) -> None:
+        if value < 0 or value > 12:
+            raise ValueError(f'Invalid month {value}. Should be in 0-12 range.')
+        self._month = value
+
+    @property
+    def day(self) -> int:
+        return self._day
+
+    @day.setter
+    def day(self, value) -> None:
+        if value < 0 or value > 31:
+            raise ValueError(f'Invalid day {value}. Should be in 0-12 range.')
+        self._day = value
+
+    @property
+    def hour(self) -> int:
+        return self._hour
+
+    @hour.setter
+    def hour(self, value) -> None:
+        if value < 0 or value > 24:
+            raise ValueError(f'Invalid hour {value}. Should be in 0-24 range.')
+        self._hour = value
+
+    @property
+    def minute(self) -> int:
+        return self._minute
+
+    @minute.setter
+    def minute(self, value) -> None:
+        if value < 0 or value > 60:
+            raise ValueError(f'Invalid minute {value}. Should be in 0-60 range.')
+        self._minute = value
+
+    @property
+    def bits(self) -> str:
+        eta_bits = convert_int_to_bits(num=self.month, bits_count=4)
+        for value in [self.day, self.hour]:
+            eta_bits += convert_int_to_bits(num=value, bits_count=5)
+        eta_bits += convert_int_to_bits(num=self.minute, bits_count=6)
+        return eta_bits
 
 
 if __name__ == '__main__':
@@ -345,6 +405,7 @@ if __name__ == '__main__':
                       ship_type=70,
                       dimension=dimension_dict,
                       eta={},
+                      draught=12.2,
                       destination='NEW YORK')
     print(msg)
 

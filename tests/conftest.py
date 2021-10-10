@@ -15,13 +15,25 @@ def dummy_ship_dimension():
 
 
 @fixture
-def dummy_ais_msg_type_5(dummy_ship_dimension):
+def dummy_ship_eta():
+    dimension_dict = {
+        'month': 5,
+        'day': 15,
+        'hour': 14,
+        'minute': 0
+    }
+    return dimension_dict
+
+
+@fixture
+def dummy_ais_msg_type_5(dummy_ship_dimension, dummy_ship_eta):
     msg = AisMsgType5(mmsi=205344990,
                       imo=9134270,
                       call_sign='3FOF8',
                       ship_name='EVER DIADEM',
                       ship_type=70,
                       dimension=dummy_ship_dimension,
-                      eta={},
+                      eta=dummy_ship_eta,
+                      draught=12.2,
                       destination='NEW YORK')
     return msg

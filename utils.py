@@ -85,3 +85,19 @@ def add_padding_0_bits(bits_string: str, required_length: int) -> tuple:
         bits_string += '0'
         extra_0_bits_count += 1
     return bits_string, extra_0_bits_count
+
+
+def nmea_check_sum(data: str):
+    """
+    Return calculated NMEA checksum.
+    """
+    check_sum: int = 0
+    for char in data:
+        num = bytearray(char, encoding='utf-8')[0]
+        # XOR operation.
+        check_sum = (check_sum ^ num)
+    # Returns only hex digits string without leading 0x.
+    hex_str: str = str(hex(check_sum))[2:]
+    if len(hex_str) == 2:
+        return hex_str.upper()
+    return f'0{hex_str}'.upper()
