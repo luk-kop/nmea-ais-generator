@@ -55,49 +55,26 @@ def test_aismsg_payload_sixbits_list():
     assert msg._payload_sixbits_list[:3] == ['000001', '000011', '000011']
 
 
-def test_aismsg_bits_to_num():
-    test_dir = {
-        '0001': 1,
-        '0010': 2,
-        '101000': 40,
-        '011011': 27,
-        '110011': 51
-    }
-    for bits, int_num in test_dir.items():
-        assert AisMsgType1.bits_to_num(bits=bits) == int_num
-
-
-def test_aismsg_sixbit_decimal_to_ascii_correct():
-    decimal_to_ascii = {
-        0: 48,
-        13: 61,
-        24: 72,
-        32: 80,
-        33: 81,
-        36: 84,
-        39: 87,
-        40: 96,
-        41: 97,
-        45: 101,
-        55: 111,
-        59: 115,
-        63: 119
-    }
-    for decimal, ascii in decimal_to_ascii.items():
-        assert AisMsgType1.sixbit_decimal_to_ascii(decimal_num=decimal) == ascii
-
-
-def test_aismsg_sixbit_decimal_to_ascii_incorrect():
+def test_aismsg_speed_invalid():
     with pytest.raises(Exception):
-        AisMsgType1.sixbit_decimal_to_ascii(decimal_num=-1)
+        AisMsgType1(mmsi=205344990, speed=-1, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
     with pytest.raises(Exception):
-        AisMsgType1.sixbit_decimal_to_ascii(decimal_num=64)
+        AisMsgType1(mmsi=205344990, speed=102.3, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
 
 
-def test_aismsg_ascii_to_char():
-    assert AisMsgType1.ascii_to_char(ascii_code=64) == '@'
-    assert AisMsgType1.ascii_to_char(ascii_code=48) == '0'
-    assert AisMsgType1.ascii_to_char(ascii_code=119) == 'w'
+def test_aismsg_timestamp_invalid():
+    with pytest.raises(Exception):
+        AisMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=-1)
+    with pytest.raises(Exception):
+        AisMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=61)
+
+
+def test_aismsg_timestamp_course():
+    with pytest.raises(Exception):
+        AisMsgType1(mmsi=205344990, speed=103, lon=4.407046666667, lat=51.229636666667, course=-1, timestamp=40)
+    with pytest.raises(Exception):
+        AisMsgType1(mmsi=205344990, speed=-1, lon=4.407046666667, lat=51.229636666667, course=361, timestamp=40)
+
 
 
 def test_aismsg_encode():
