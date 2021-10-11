@@ -2,6 +2,8 @@ import pytest
 
 from main import ShipDimension, ShipEta
 
+from utils import convert_ais_payload_to_bits
+
 
 def test_aismsg_mmsi(dummy_ais_msg_type_5):
     msg = dummy_ais_msg_type_5
@@ -223,3 +225,38 @@ def test_aismsg_destination_empty(dummy_ais_msg_type_5):
     msg.destination = ''
     assert len(msg.destination) == 120
     assert msg.destination == '000000' * 20
+
+
+def test_aismsg_before_encode(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    assert msg.fill_bits == 0
+    assert len(msg.payload_bits) == 424
+
+
+def test_aismsg_after_encode_fill_bits(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    ais_payload = msg.encode()
+    # payload with fill-bits added
+    assert msg.fill_bits == 2
+
+
+def test_aismsg_after_encode_payload_chars_length(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    ais_payload = msg.encode()
+    # payload with fill-bits added
+    assert len(ais_payload) == 71
+
+
+def test_aismsg_after_encode_payload_bits_length(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    ais_payload = msg.encode()
+    # payload with fill-bits added
+    payload_bits = convert_ais_payload_to_bits(payload=ais_payload)
+    assert len(payload_bits) == 426
+
+
+def test_aismsg_after_encode_payload_content(dummy_ais_msg_type_5):
+    msg = dummy_ais_msg_type_5
+    ais_payload = msg.encode()
+    # payload with fill-bits added
+    assert ais_payload == '533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880'
