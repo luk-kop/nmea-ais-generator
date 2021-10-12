@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 import textwrap
+from typing import Union
 
 from utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
-    convert_ascii_char_to_ascii6_code, get_ascii_code_of_char, add_padding, add_padding_0_bits, nmea_check_sum
+    convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
 
 
-class AisMsg(ABC):
+class AISMsg(ABC):
     """
     Class represent an abstract class which acts as a parent class for other AIS msgs.
     """
@@ -52,7 +53,7 @@ class AisMsg(ABC):
         return payload
 
 
-class AisMsgType1(AisMsg):
+class AISMsgType1(AISMsg):
     """
     Class represents payload of AIS msg type 1 (Position Report Class A).
     Total number of bits in one AIS msg type 1 payload - 168 bits.
@@ -72,7 +73,7 @@ class AisMsgType1(AisMsg):
         self.course = course
         # True heading - default value, not available (511)
         self.heading = convert_int_to_bits(num=511, bits_count=9)
-        self.timestamp = timestamp      # 6
+        self.timestamp = timestamp
         self.maneuver = convert_int_to_bits(num=0, bits_count=2)
         self.spare = convert_int_to_bits(num=0, bits_count=3)
         # RAIM - not in use (0)
@@ -145,10 +146,10 @@ class AisMsgType1(AisMsg):
 
     def __str__(self) -> str:
         nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
-        return f'!{nmea_output}*{nmea_check_sum(nmea_output)}\r\n'
+        return f'!{nmea_output}*{nmea_checksum(nmea_output)}\r\n'
 
 
-class AisMsgType5(AisMsg):
+class AISMsgType5(AISMsg):
     """
     Class represents payload of AIS msg type 5 (Static and Voyage Related Data).
     Total number of bits in one AIS msg type 5 payload - 424 bits (without fill_bits).
@@ -436,6 +437,36 @@ class ShipEta:
         return eta_bits
 
 
+class NMEAMessage:
+    """
+    Class represents NMEA message. It can consist of a single sequence or multiple sequences.
+    """
+    def __init__(self, payload: Union[AISMsgType1, AISMsgType5]) -> None:
+        self.nmea_msg_type = 'AIVDM'
+        self.payload = payload
+        self.payload_parts: list = textwrap.wrap(payload.encode(), 60)
+        # Default 1 unless it is multi-sentence msg
+        self.number_of_sentences = len(self.payload_parts)
+        self.ais_channel = 'A'
+
+    def get_sentences(self) -> list:
+        """
+        Return list of NMEA sentences.
+        """
+        nmea_sentences = []
+        for sentence_number, sentence_payload in enumerate(self.payload_parts, 1):
+            # Number of unused bits at end of encoded data (0-5)
+            fill_bits = self.payload.fill_bits if sentence_number == self.number_of_sentences else 0
+            # TODO: 0-9 generator or cache ???????
+            # Can be digit between 0-9, but will be common for both messages.
+            sequential_msg_id = '1' if self.number_of_sentences > 1 else ''
+            # Data from which the checksum will be calculated.
+            sentence_data = f'{self.nmea_msg_type},{self.number_of_sentences},{sentence_number},{sequential_msg_id},' \
+                            f'{self.ais_channel},{sentence_payload},{fill_bits}'
+            nmea_sentences.append(f'!{sentence_data}*{nmea_checksum(sentence_data)}\r\n')
+        return nmea_sentences
+
+
 if __name__ == '__main__':
     # Only for tests
     dimension_dict = {
@@ -450,7 +481,7 @@ if __name__ == '__main__':
         'hour': 14,
         'minute': 0
     }
-    msg = AisMsgType5(mmsi=205344990,
+    msg = AISMsgType5(mmsi=205344990,
                       imo=9134270,
                       call_sign='3FOF8',
                       ship_name='EVER DIADEM',

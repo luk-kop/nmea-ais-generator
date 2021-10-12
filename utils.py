@@ -87,7 +87,7 @@ def add_padding_0_bits(bits_string: str, required_length: int) -> tuple:
     return bits_string, extra_0_bits_count
 
 
-def nmea_check_sum(data: str) -> str:
+def nmea_checksum(data: str) -> str:
     """
     Return calculated NMEA checksum.
     """

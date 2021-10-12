@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from main import AisMsgType5
+from main import AISMsgType1, AISMsgType5
 
 
 @fixture
@@ -27,7 +27,7 @@ def dummy_ship_eta():
 
 @fixture
 def dummy_ais_msg_type_5(dummy_ship_dimension, dummy_ship_eta):
-    msg = AisMsgType5(mmsi=205344990,
+    msg = AISMsgType5(mmsi=205344990,
                       imo=9134270,
                       call_sign='3FOF8',
                       ship_name='EVER DIADEM',
@@ -36,4 +36,16 @@ def dummy_ais_msg_type_5(dummy_ship_dimension, dummy_ship_eta):
                       eta=dummy_ship_eta,
                       draught=12.2,
                       destination='NEW YORK')
+    return msg
+
+
+@fixture
+def dummy_ais_msg_type_1():
+    msg = AISMsgType1(mmsi=205344990,
+                      speed=0,
+                      course=110.7,
+                      lon=4.407046666667,
+                      lat=51.229636666667,
+                      nav_status=15,
+                      timestamp=40)
     return msg

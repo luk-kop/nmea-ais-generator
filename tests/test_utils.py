@@ -10,7 +10,8 @@ from utils import (
     convert_ascii_char_to_ascii6_code,
     add_padding,
     add_padding_0_bits,
-    convert_ais_payload_to_bits
+    convert_ais_payload_to_bits,
+    nmea_checksum
 )
 
 
@@ -170,3 +171,17 @@ def test_convert_ais_payload_to_bits():
                        '010111101110000000011110100011100001010101111000000110010011110100100010111000001000001000001' \
                        '000001000001000001000001000001000001000001000001000000000'
     assert convert_ais_payload_to_bits(payload=ais_payload) == ais_payload_bits
+
+
+def test_nmea_checksum_correct():
+    checksum = nmea_checksum('AIVDM,2,1,8,A,56;OaD02B8EL990b221`P4v1T4pN0HDpN2222216HHN>B6U30A2hCDhD`888,0')
+    assert checksum == '4D'
+    checksum = nmea_checksum('AIVDM,2,2,8,A,88888888880,2')
+    assert checksum == '2C'
+
+
+def test_nmea_checksum_incorrect():
+    checksum = nmea_checksum('AIVDM,2,1,8,A,56;OaD02B8EL990b221`P4v1T4pN0HDpN2222216HHN>B6U30A2hCDhD`888,0')
+    assert checksum != 'XX'
+    checksum = nmea_checksum('XXXXX')
+    assert checksum != '2C'
