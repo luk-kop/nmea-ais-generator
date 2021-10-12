@@ -1,6 +1,6 @@
 import pytest
 
-from main import AISMsgType1
+from nmea_msg import AISMsgType1
 
 
 def test_aismsg_mmsi():

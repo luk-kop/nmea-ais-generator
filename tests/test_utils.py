@@ -1,6 +1,6 @@
 import pytest
 
-from utils import (
+from nmea_utils import (
     get_ascii_code_of_char,
     get_char_of_ascii_code,
     convert_int_to_bits,

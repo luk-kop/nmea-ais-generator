@@ -1,8 +1,8 @@
 import pytest
 
-from main import ShipDimension, ShipEta
+from nmea_msg import ShipDimension, ShipEta
 
-from utils import convert_ais_payload_to_bits
+from nmea_utils import convert_ais_payload_to_bits
 
 
 def test_aismsg_mmsi(dummy_ais_msg_type_5):

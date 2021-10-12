@@ -1,4 +1,4 @@
-from main import NMEAMessage
+from nmea_msg import NMEAMessage
 
 
 def test_nmea_msg_multi_sentence(dummy_ais_msg_type_5):

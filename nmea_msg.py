@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import textwrap
 from typing import Union
 
-from utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
+from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
 
 
