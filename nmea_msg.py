@@ -4,7 +4,7 @@ from typing import Union
 
 from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
-from ais_track import ShipDimension
+from ais_track import ShipDimension, ShipEta
 
 
 class AISMsg(ABC):
@@ -260,7 +260,7 @@ class AISMsgType5(AISMsg):
 
     @eta.setter
     def eta(self, eta) -> None:
-        self._eta = ShipEta(eta_data=eta).bits
+        self._eta = ShipEta(**eta).bits
 
     @property
     def draught(self) -> str:
@@ -308,65 +308,6 @@ class AISMsgType5(AISMsg):
         return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.ais_version}{self.imo}{self.call_sign}' \
                f'{self.ship_name}{self.ship_type}{self.dimension}{self.pos_fix_type}{self.eta}{self.draught}' \
                f'{self.destination}{self.dte}{self.spare}'
-
-
-class ShipEta:
-    """
-    Class represents ship's Estimated Time of Arrival in UTC.
-    """
-    def __init__(self, eta_data: dict) -> None:
-        self.month = eta_data.get('month', 0)
-        self.day = eta_data.get('day', 0)
-        self.hour = eta_data.get('hour', 24)
-        self.minute = eta_data.get('minute', 60)
-
-    @property
-    def month(self) -> int:
-        return self._month
-
-    @month.setter
-    def month(self, value) -> None:
-        if value < 0 or value > 12:
-            raise ValueError(f'Invalid month {value}. Should be in 0-12 range.')
-        self._month = value
-
-    @property
-    def day(self) -> int:
-        return self._day
-
-    @day.setter
-    def day(self, value) -> None:
-        if value < 0 or value > 31:
-            raise ValueError(f'Invalid day {value}. Should be in 0-12 range.')
-        self._day = value
-
-    @property
-    def hour(self) -> int:
-        return self._hour
-
-    @hour.setter
-    def hour(self, value) -> None:
-        if value < 0 or value > 24:
-            raise ValueError(f'Invalid hour {value}. Should be in 0-24 range.')
-        self._hour = value
-
-    @property
-    def minute(self) -> int:
-        return self._minute
-
-    @minute.setter
-    def minute(self, value) -> None:
-        if value < 0 or value > 60:
-            raise ValueError(f'Invalid minute {value}. Should be in 0-60 range.')
-        self._minute = value
-
-    @property
-    def bits(self) -> str:
-        eta_bits = convert_int_to_bits(num=self.month, bits_count=4)
-        for value in [self.day, self.hour]:
-            eta_bits += convert_int_to_bits(num=value, bits_count=5)
-        eta_bits += convert_int_to_bits(num=self.minute, bits_count=6)
-        return eta_bits
 
 
 class NMEAMessage:
