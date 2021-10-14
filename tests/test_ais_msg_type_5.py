@@ -1,6 +1,7 @@
 import pytest
 
-from nmea_msg import ShipDimension, ShipEta
+from nmea_msg import ShipEta
+from ais_track import ShipDimension
 
 from nmea_utils import convert_ais_payload_to_bits
 
@@ -57,7 +58,8 @@ def test_aismsg_dimension(dummy_ais_msg_type_5):
 
 
 def test_ship_dimension_attrs(dummy_ship_dimension):
-    dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    # dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    dim = ShipDimension(**dummy_ship_dimension)
     assert dim.to_bow == 225
     assert dim.to_stern == 70
     assert dim.to_port == 1
@@ -65,13 +67,15 @@ def test_ship_dimension_attrs(dummy_ship_dimension):
 
 
 def test_ship_dimension_attrs_bits(dummy_ship_dimension):
-    dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    # dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    dim = ShipDimension(**dummy_ship_dimension)
     assert len(dim.bits) == 30
     assert dim.bits == '011100001001000110000001011111'
 
 
 def test_ship_dimension_attrs_max(dummy_ship_dimension):
-    dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    # dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    dim = ShipDimension(**dummy_ship_dimension)
     dim.to_bow, dim.to_stern, dim.to_port, dim.to_starboard = 600, 600, 100, 100
     assert dim.to_bow == 511
     assert dim.to_stern == 511
@@ -80,7 +84,8 @@ def test_ship_dimension_attrs_max(dummy_ship_dimension):
 
 
 def test_ship_dimension_attrs_min(dummy_ship_dimension):
-    dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    # dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    dim = ShipDimension(**dummy_ship_dimension)
     dim.to_bow, dim.to_stern, dim.to_port, dim.to_starboard = 0, 0, 0, 0
     assert dim.to_bow == 0
     assert dim.to_stern == 0
@@ -89,7 +94,8 @@ def test_ship_dimension_attrs_min(dummy_ship_dimension):
 
 
 def test_ship_dimension_attrs_incorrect(dummy_ship_dimension):
-    dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    # dim = ShipDimension(dimension_data=dummy_ship_dimension)
+    dim = ShipDimension(**dummy_ship_dimension)
     with pytest.raises(Exception):
         dim.to_bow = -1
     with pytest.raises(Exception):

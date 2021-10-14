@@ -4,6 +4,7 @@ from typing import Union
 
 from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
+from ais_track import ShipDimension
 
 
 class AISMsg(ABC):
@@ -251,7 +252,7 @@ class AISMsgType5(AISMsg):
 
     @dimension.setter
     def dimension(self, dimension) -> None:
-        self._dimension = ShipDimension(dimension_data=dimension).bits
+        self._dimension = ShipDimension(**dimension).bits
 
     @property
     def eta(self) -> str:
@@ -307,75 +308,6 @@ class AISMsgType5(AISMsg):
         return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.ais_version}{self.imo}{self.call_sign}' \
                f'{self.ship_name}{self.ship_type}{self.dimension}{self.pos_fix_type}{self.eta}{self.draught}' \
                f'{self.destination}{self.dte}{self.spare}'
-
-
-class ShipDimension:
-    """
-    Class represents the dimension of the ship.
-    All dimensions in meters.
-    """
-    def __init__(self, dimension_data: dict) -> None:
-        self.to_bow = dimension_data.get('to_bow', 0)
-        self.to_stern = dimension_data.get('to_stern', 0)
-        self.to_port = dimension_data.get('to_port', 0)
-        self.to_starboard = dimension_data.get('to_starboard', 0)
-
-    @property
-    def to_bow(self) -> int:
-        return self._to_bow
-
-    @to_bow.setter
-    def to_bow(self, value) -> None:
-        if value < 0:
-            raise ValueError(f'Invalid to_bow {value}. Should be 0 or greater.')
-        elif value > 511:
-            value = 511
-        self._to_bow = value
-
-    @property
-    def to_stern(self) -> int:
-        return self._to_stern
-
-    @to_stern.setter
-    def to_stern(self, value) -> None:
-        if value < 0:
-            raise ValueError(f'Invalid to_stern {value}. Should be 0 or greater.')
-        elif value > 511:
-            value = 511
-        self._to_stern = value
-
-    @property
-    def to_port(self) -> int:
-        return self._to_port
-
-    @to_port.setter
-    def to_port(self, value) -> None:
-        if value < 0:
-            raise ValueError(f'Invalid to_port {value}. Should be 0 or greater.')
-        elif value > 63:
-            value = 63
-        self._to_port = value
-
-    @property
-    def to_starboard(self) -> int:
-        return self._to_starboard
-
-    @to_starboard.setter
-    def to_starboard(self, value) -> None:
-        if value < 0:
-            raise ValueError(f'Invalid to_starboard {value}. Should be 0 or greater.')
-        elif value > 63:
-            value = 63
-        self._to_starboard = value
-
-    @property
-    def bits(self) -> str:
-        dimension_bits = ''
-        for value in [self.to_bow, self.to_stern]:
-            dimension_bits += convert_int_to_bits(num=value, bits_count=9)
-        for value in [self.to_port, self.to_starboard]:
-            dimension_bits += convert_int_to_bits(num=value, bits_count=6)
-        return dimension_bits
 
 
 class ShipEta:

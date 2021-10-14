@@ -1,9 +1,10 @@
-from ais_track import AISTrackList
+from ais_track import AISTrackList, ShipDimension
 
 
 def test_ais_track_list_single(dummy_ais_tracks_list_single):
     track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
     assert len(track_list.tracks) == 1
+    assert track_list.dict()['tracks'] == dummy_ais_tracks_list_single
 
 
 def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
@@ -33,3 +34,19 @@ def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
     }
     assert track.draught == 12.2
     assert track.destination == 'NEW YORK'
+
+
+def test_ship_dimension_default_values_correct():
+    dim = ShipDimension()
+    assert dim.to_bow == 0
+    assert dim.to_stern == 0
+    assert dim.to_port == 0
+    assert dim.to_starboard == 0
+
+
+def test_ship_dimension_default_values_incorrect():
+    dim = ShipDimension()
+    assert dim.to_bow != 12
+    assert dim.to_stern != 123
+    assert dim.to_port != 12
+    assert dim.to_starboard != 13
