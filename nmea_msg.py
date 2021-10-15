@@ -364,6 +364,3 @@ if __name__ == '__main__':
                       draught=12.2,
                       destination='NEW YORK')
     print(msg.encode())
-
-
-

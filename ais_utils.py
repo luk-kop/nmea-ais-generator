@@ -34,7 +34,7 @@ def verify_sixbit_ascii(text: str) -> bool:
     """
     Checks that all chars in given text are valid sixbit ASCII chars.
     """
-    sixbit_ascii = r'@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_ !"#$%&\()*+,-./'
+    sixbit_ascii = r'@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_ !"#$%&\()*+,-./0123456789:;<=>?'
     for char in text:
         if char not in sixbit_ascii:
             return False

@@ -3,6 +3,9 @@ from typing import List
 from pydantic import BaseModel, validator
 
 from nmea_utils import convert_int_to_bits
+from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii
+from nmea_utils import add_padding
+from constants import NavigationStatus
 
 
 class ShipDimension(BaseModel):
@@ -103,6 +106,67 @@ class AISTrack(BaseModel):
     eta: ShipEta
     draught: float
     destination: str
+
+    class Config:
+        validate_assignment = True
+
+    @validator('mmsi')
+    def check_mmsi_value(cls, value, field):
+        if len(str(value)) != 9:
+            raise ValueError(f'Invalid {field.name} {value}. Should consist of 9 digits')
+        elif not check_mmsi_mid_code(value):
+            raise ValueError(f'Invalid {field.name} {value}. Invalid MID code.')
+        return value
+
+    @validator('nav_status')
+    def check_nav_status_value(cls, value, field):
+        if not NavigationStatus.has_value(value):
+            raise ValueError(f'Invalid {field.name} {value}.')
+        return value
+
+    @validator('lon')
+    def check_lon_value(cls, value, field):
+        if value < -180 or value > 180:
+            raise ValueError(f'Invalid {field.name} {value}. Should be in -180 to 180 range.')
+        return value
+
+    @validator('lat')
+    def check_lat_value(cls, value, field):
+        if value < -90 or value > 90:
+            raise ValueError(f'Invalid {field.name} {value}. Should be in -180 to 180 range.')
+        return value
+
+    @validator('speed')
+    def check_speed_value(cls, value, field):
+        if value < 0 or value > 102.2:
+            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-102.2 range.')
+        return value
+
+    @validator('course')
+    def check_course_value(cls, value, field):
+        if value < 0 or value > 360:
+            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-360 range.')
+        return value
+
+    @validator('imo')
+    def check_imo_value(cls, value, field):
+        if len(str(value)) != 7:
+            raise ValueError(f'Invalid {field.name} {value}. Should consist of 7 digits')
+        elif not verify_imo(imo=value):
+            raise ValueError(f'Invalid {field.name} {value}. Invalid IMO checksum.')
+        return value
+
+    @validator('call_sign')
+    def check_call_sign_value(cls, value, field):
+        required_chars_count = 7
+        if len(value) > required_chars_count:
+            value = value[:required_chars_count]
+        elif not verify_sixbit_ascii(value):
+            raise ValueError(f'Invalid {field.name} {value}. Invalid sixbit ASCII chars.')
+        elif len(value) < required_chars_count:
+            # Add padding, if necessary
+            value = add_padding(text=value, required_length=required_chars_count)
+        return value
 
     def generate_nmea(self):
         pass

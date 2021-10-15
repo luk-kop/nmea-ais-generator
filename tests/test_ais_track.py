@@ -6,7 +6,6 @@ from ais_track import AISTrackList, ShipDimension, ShipEta
 def test_ais_track_list_single(dummy_ais_tracks_list_single):
     track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
     assert len(track_list.tracks) == 1
-    assert track_list.dict()['tracks'] == dummy_ais_tracks_list_single
 
 
 def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
@@ -19,7 +18,7 @@ def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
     assert track.speed == 0
     assert track.course == 110.7
     assert track.imo == 9134270
-    assert track.call_sign == '3FOF8'
+    assert track.call_sign == '3FOF8  '
     assert track.ship_name == 'EVER DIADEM'
     assert track.ship_type == 70
     assert track.dimension == {
@@ -36,6 +35,188 @@ def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
     }
     assert track.draught == 12.2
     assert track.destination == 'NEW YORK'
+
+
+def test_ais_track_attr_mmsi_correct(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['mmsi'] = 261000001
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.mmsi == 261000001
+
+
+def test_ais_track_attr_mmsi_incorrect_mid(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    with pytest.raises(Exception):
+        track.mmsi = 123000001
+
+
+def test_ais_track_attr_mmsi_incorrect_len(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    with pytest.raises(Exception):
+        track.mmsi = 12300000
+
+
+def test_ais_track_attr_nav_status_correct(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['nav_status'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.nav_status == 0
+
+
+def test_ais_track_attr_nav_status_incorrect(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['nav_status'] = 30
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_lon_correct(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lon'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.lon == 0
+
+
+def test_ais_track_attr_lon_correct_multiple(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lon'] = 10
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    for lon in [-180, -10, 10, 180]:
+        track.lon = lon
+        assert track.lon == lon
+
+
+def test_ais_track_attr_lon_incorrect_str(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lon'] = 'xxx'
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_lon_incorrect_value(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lon'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    with pytest.raises(Exception):
+        track.lon = -200
+    with pytest.raises(Exception):
+        track.lon = 200
+
+
+def test_ais_track_attr_lat_correct(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lat'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.lat == 0
+
+
+def test_ais_track_attr_lat_correct_multiple(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lat'] = 10
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    for lat in [-90, -10, 10, 90]:
+        track.lat = lat
+        assert track.lat == lat
+
+
+def test_ais_track_attr_lat_incorrect_str(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lat'] = 'xxx'
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_lat_incorrect_value(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['lat'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    with pytest.raises(Exception):
+        track.lat = -91
+    with pytest.raises(Exception):
+        track.lat = 92
+
+
+def test_ais_track_attr_speed_min(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['speed'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.speed == 0
+
+
+def test_ais_track_attr_speed_max(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['speed'] = 102.2
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.speed == 102.2
+
+
+def test_ais_track_attr_speed_incorrect_above(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['speed'] = 105
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_speed_incorrect_below(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['speed'] = -1
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_course_min(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['course'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.course == 0
+
+
+def test_ais_track_attr_course_max(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['course'] = 360
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.course == 360
+
+
+def test_ais_track_attr_course_incorrect_above(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['course'] = 361
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_course_incorrect_below(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['course'] = -1
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_imo(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['imo'] = 9134270
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.imo == 9134270
+
+
+def test_ais_track_attr_imo_too_short(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['imo'] = 91342
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_imo_invalid(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['imo'] = 1234271
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_call_sign(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['call_sign'] = 'SQWD'
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.call_sign == 'SQWD   '
+
+
+def test_ais_track_attr_call_sign_incorrect(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['call_sign'] = 'sqWD'
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
 
 
 def test_ship_dimension_attrs(dummy_ship_dimension):
@@ -181,3 +362,4 @@ def test_ship_eta_attrs_default_values_incorrect():
     assert eta.day != 1
     assert eta.hour != 0
     assert eta.minute != 0
+
