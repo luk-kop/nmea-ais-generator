@@ -4,7 +4,7 @@ from typing import Union
 
 from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
-from ais_track import ShipDimension, ShipEta
+from ais_utils import ShipDimension, ShipEta
 
 
 class AISMsg(ABC):
@@ -157,7 +157,7 @@ class AISMsgType5(AISMsg):
     The msg payload will be split into two AIVDM messages due to the maximum NMEA frame size limitation (82 chars).
     Payload example: 55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880
     """
-    def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: dict, eta: dict, draught: float, destination: str):
+    def __init__(self, mmsi: int, imo: int, call_sign: str, ship_name: str, ship_type: int, dimension: ShipDimension, eta: ShipEta, draught: float, destination: str):
         super().__init__(mmsi)
         self.msg_type = convert_int_to_bits(num=5, bits_count=6)
         # AIS version - station compliant with ITU-R M.1371-5 (2)
@@ -252,7 +252,7 @@ class AISMsgType5(AISMsg):
 
     @dimension.setter
     def dimension(self, dimension) -> None:
-        self._dimension = ShipDimension(**dimension).bits
+        self._dimension = dimension.bits
 
     @property
     def eta(self) -> str:
@@ -260,7 +260,7 @@ class AISMsgType5(AISMsg):
 
     @eta.setter
     def eta(self, eta) -> None:
-        self._eta = ShipEta(**eta).bits
+        self._eta = eta.bits
 
     @property
     def draught(self) -> str:

@@ -2,93 +2,10 @@ from typing import List
 
 from pydantic import BaseModel, validator
 
-from nmea_utils import convert_int_to_bits
-from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii
 from nmea_utils import add_padding
+from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii, ShipDimension, ShipEta
+from nmea_msg import AISMsgType1, AISMsgType5
 from constants import NavigationStatus, ShipType
-
-
-class ShipDimension(BaseModel):
-    """
-    Class represents the dimension of the ship. All dimensions in meters.
-    """
-    to_bow: int = 0
-    to_stern: int = 0
-    to_port: int = 0
-    to_starboard: int = 0
-
-    class Config:
-        validate_assignment = True
-
-    @validator('to_bow', 'to_stern')
-    def check_to_bow_and_to_stern_value(cls, value, field):
-        if value < 0:
-            raise ValueError(f'Invalid {field.name} {value}. Should be 0 or greater.')
-        elif value > 511:
-            value = 511
-        return value
-
-    @validator('to_port', 'to_starboard')
-    def check_to_port_and_to_starboard_value(cls, value, field):
-        if value < 0:
-            raise ValueError(f'Invalid {field.name} {value}. Should be 0 or greater.')
-        elif value > 63:
-            value = 63
-        return value
-
-    @property
-    def bits(self) -> str:
-        dimension_bits = ''
-        for value in [self.to_bow, self.to_stern]:
-            dimension_bits += convert_int_to_bits(num=value, bits_count=9)
-        for value in [self.to_port, self.to_starboard]:
-            dimension_bits += convert_int_to_bits(num=value, bits_count=6)
-        return dimension_bits
-
-
-class ShipEta(BaseModel):
-    """
-    Class represents ship's Estimated Time of Arrival in UTC.
-    """
-    month: int = 0
-    day: int = 0
-    hour: int = 24
-    minute: int = 60
-
-    class Config:
-        validate_assignment = True
-
-    @validator('month')
-    def check_month_value(cls, value, field):
-        if value < 0 or value > 12:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-12 range.')
-        return value
-
-    @validator('day')
-    def check_day_value(cls, value, field):
-        if value < 0 or value > 31:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-12 range.')
-        return value
-
-    @validator('hour')
-    def check_hour_value(cls, value, field):
-        if value < 0 or value > 24:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-24 range.')
-        return value
-
-    @validator('minute')
-    def check_minute_value(cls, value, field):
-        if value < 0 or value > 60:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-60 range.')
-        return value
-
-    @property
-    def bits(self) -> str:
-        eta_bits = convert_int_to_bits(num=self.month, bits_count=4)
-        for value in [self.day, self.hour]:
-            eta_bits += convert_int_to_bits(num=value, bits_count=5)
-        eta_bits += convert_int_to_bits(num=self.minute, bits_count=6)
-        return eta_bits
 
 
 class AISTrack(BaseModel):
@@ -106,6 +23,7 @@ class AISTrack(BaseModel):
     eta: ShipEta
     draught: float
     destination: str
+    timestamp: int = 60
 
     class Config:
         validate_assignment = True
@@ -187,8 +105,45 @@ class AISTrack(BaseModel):
             value = 25.5
         return value
 
-    def generate_nmea(self):
+    @validator('timestamp')
+    def check_timestamp_value(cls, value, field):
+        if value < 0 or value > 60:
+            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-60 range.')
+        return value
+
+    def generate_nmea(self) -> str:
+        """
+        Generate NMEA msgs for AISTrack.
+        """
         pass
+
+    def generate_payload_type_1(self) -> str:
+        """
+        Generates payload for AIS Type 1 msg.
+        """
+        payload = AISMsgType1(mmsi=self.mmsi,
+                              lon=self.lon,
+                              lat=self.lat,
+                              course=self.course,
+                              nav_status=self.nav_status,
+                              speed=self.speed,
+                              timestamp=self.timestamp).encode()
+        return payload
+
+    def generate_payload_type_5(self) -> str:
+        """
+        Generates payload for AIS Type 5 msg.
+        """
+        payload = AISMsgType5(mmsi=self.mmsi,
+                              imo=self.imo,
+                              call_sign=self.call_sign,
+                              ship_name=self.ship_name,
+                              ship_type=self.ship_type,
+                              dimension=self.dimension,
+                              eta=self.eta,
+                              draught=self.draught,
+                              destination=self.destination).encode()
+        return payload
 
 
 class AISTrackList(BaseModel):

@@ -35,6 +35,7 @@ def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
     }
     assert track.draught == 12.2
     assert track.destination == 'NEW YORK' + ' ' * 12
+    assert track.timestamp == 40
 
 
 def test_ais_track_attr_mmsi_correct(dummy_ais_tracks_list_single):
@@ -306,6 +307,32 @@ def test_ais_track_attr_destination_incorrect(dummy_ais_tracks_list_single):
         track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
 
 
+def test_ais_track_attr_timestamp_min(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['timestamp'] = 40
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.timestamp == 40
+
+
+def test_ais_track_attr_timestamp_max(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['timestamp'] = 60
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.timestamp == 60
+
+
+def test_ais_track_attr_timestamp_incorrect_above(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['timestamp'] = 61
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_timestamp_incorrect_below(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['timestamp'] = -1
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
 def test_ship_dimension_attrs(dummy_ship_dimension):
     dim = ShipDimension(**dummy_ship_dimension)
     assert dim.to_bow == 225
@@ -449,4 +476,18 @@ def test_ship_eta_attrs_default_values_incorrect():
     assert eta.day != 1
     assert eta.hour != 0
     assert eta.minute != 0
+
+
+def test_generate_payload_type_1(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.generate_payload_type_1() == '133m@ogP00PD;88MD5MTDww@0D7k'
+
+
+def test_generate_payload_type_5(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.generate_payload_type_5() == '533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880'
+
+
 

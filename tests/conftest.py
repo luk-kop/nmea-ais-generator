@@ -1,6 +1,7 @@
 from pytest import fixture
 
 from nmea_msg import AISMsgType1, AISMsgType5
+from ais_utils import ShipDimension, ShipEta
 
 
 @fixture
@@ -32,8 +33,8 @@ def dummy_ais_msg_type_5(dummy_ship_dimension, dummy_ship_eta):
                       call_sign='3FOF8',
                       ship_name='EVER DIADEM',
                       ship_type=70,
-                      dimension=dummy_ship_dimension,
-                      eta=dummy_ship_eta,
+                      dimension=ShipDimension(**dummy_ship_dimension),
+                      eta=ShipEta(**dummy_ship_eta),
                       draught=12.2,
                       destination='NEW YORK')
     return msg
@@ -68,7 +69,8 @@ def dummy_ais_tracks_list_single(dummy_ship_dimension, dummy_ship_eta):
             'dimension': dummy_ship_dimension,
             'eta': dummy_ship_eta,
             'draught': 12.2,
-            'destination': 'NEW YORK'
+            'destination': 'NEW YORK',
+            'timestamp': 40
         }
     ]
     return tracks
