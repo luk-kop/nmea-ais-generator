@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator
 from nmea_utils import convert_int_to_bits
 from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii
 from nmea_utils import add_padding
-from constants import NavigationStatus
+from constants import NavigationStatus, ShipType
 
 
 class ShipDimension(BaseModel):
@@ -156,9 +156,14 @@ class AISTrack(BaseModel):
             raise ValueError(f'Invalid {field.name} {value}. Invalid IMO checksum.')
         return value
 
-    @validator('call_sign')
-    def check_call_sign_value(cls, value, field):
-        required_chars_count = 7
+    @validator('call_sign', 'ship_name', 'destination')
+    def check_sixbit_text_value(cls, value, field):
+        field_to_chars_count = {
+            'call_sign': 7,
+            'ship_name': 20,
+            'destination': 20
+        }
+        required_chars_count = field_to_chars_count[field.name]
         if len(value) > required_chars_count:
             value = value[:required_chars_count]
         elif not verify_sixbit_ascii(value):
@@ -166,6 +171,20 @@ class AISTrack(BaseModel):
         elif len(value) < required_chars_count:
             # Add padding, if necessary
             value = add_padding(text=value, required_length=required_chars_count)
+        return value
+
+    @validator('ship_type')
+    def check_ship_type_value(cls, value, field):
+        if not ShipType.has_value(value):
+            raise ValueError(f'Invalid {field.name} {value}.')
+        return value
+
+    @validator('draught')
+    def check_draught_value(cls, value, field):
+        if value < 0:
+            raise ValueError(f'Invalid {field.name} {value}. Should be 0 or greater.')
+        elif value > 25.5:
+            value = 25.5
         return value
 
     def generate_nmea(self):

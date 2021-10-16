@@ -19,7 +19,7 @@ def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
     assert track.course == 110.7
     assert track.imo == 9134270
     assert track.call_sign == '3FOF8  '
-    assert track.ship_name == 'EVER DIADEM'
+    assert track.ship_name == 'EVER DIADEM' + ' ' * 9
     assert track.ship_type == 70
     assert track.dimension == {
         'to_bow': 225,
@@ -34,7 +34,7 @@ def test_ais_track_list_single_attrs(dummy_ais_tracks_list_single):
         'minute': 0
     }
     assert track.draught == 12.2
-    assert track.destination == 'NEW YORK'
+    assert track.destination == 'NEW YORK' + ' ' * 12
 
 
 def test_ais_track_attr_mmsi_correct(dummy_ais_tracks_list_single):
@@ -213,8 +213,95 @@ def test_ais_track_attr_call_sign(dummy_ais_tracks_list_single):
     assert track.call_sign == 'SQWD   '
 
 
+def test_ais_track_attr_call_sign_long(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['call_sign'] = '1234567890'
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.call_sign == '1234567'
+
+
 def test_ais_track_attr_call_sign_incorrect(dummy_ais_tracks_list_single):
     dummy_ais_tracks_list_single[0]['call_sign'] = 'sqWD'
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_ship_name(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['ship_name'] = 'STORM'
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.ship_name == 'STORM' + ' ' * 15
+
+
+def test_ais_track_attr_ship_name_long(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['ship_name'] = 'THE QUICK BROWN FOX JUMPS OVER'
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.ship_name == 'THE QUICK BROWN FOX '
+
+
+def test_ais_track_attr_ship_name_incorrect(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['ship_name'] = 'sToRM'
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_ship_type_correct(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['ship_type'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.ship_type == 0
+
+
+def test_ais_track_attr_ship_type_incorrect(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['ship_type'] = 100
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_draught_min(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['draught'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.draught == 0
+
+
+def test_ais_track_attr_draught_max(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['draught'] = 25.5
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.draught == 25.5
+
+
+def test_ais_track_attr_draught_above(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['draught'] = 30
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.draught == 25.5
+
+
+def test_ais_track_attr_draught_incorrect_below(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['draught'] = -1
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_destination(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['destination'] = 'BORNHOLM'
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.destination == 'BORNHOLM' + ' ' * 12
+
+
+def test_ais_track_attr_destination_long(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['destination'] = 'THE QUICK BROWN FOX JUMPS OVER'
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.destination == 'THE QUICK BROWN FOX '
+
+
+def test_ais_track_attr_destination_incorrect(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['destination'] = 'BOrNHOLM'
     with pytest.raises(Exception):
         track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
 

@@ -281,7 +281,6 @@ class AISMsgType5(AISMsg):
     @destination.setter
     def destination(self, destination) -> None:
         # TODO: enum for counts
-        required_bit_count = 120
         required_char_count = 20
         if len(destination) not in range(0, required_char_count + 1):
             raise ValueError(f'Invalid destination {destination} (max {required_char_count} chars).')
