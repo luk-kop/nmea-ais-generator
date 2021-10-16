@@ -76,7 +76,6 @@ def test_aismsg_timestamp_course():
         AISMsgType1(mmsi=205344990, speed=-1, lon=4.407046666667, lat=51.229636666667, course=361, timestamp=40)
 
 
-
 def test_aismsg_encode():
     msg = AISMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
     desired_payload = '133m@ogP00PD;88MD5MTDww@0D7k'
@@ -85,6 +84,6 @@ def test_aismsg_encode():
 
 def test_aismsg_str():
     msg = AISMsgType1(mmsi=205344990, speed=0, lon=4.407046666667, lat=51.229636666667, course=110.7, timestamp=40)
-    desired_output = '!AIVDM,1,1,,A,133m@ogP00PD;88MD5MTDww@0D7k,0*44\r\n'
+    desired_output = '133m@ogP00PD;88MD5MTDww@0D7k'
     assert str(msg) == desired_output
 

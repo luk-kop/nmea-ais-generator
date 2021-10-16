@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import textwrap
-from typing import Union
+from typing import Union, List
 
 from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
@@ -30,7 +30,7 @@ class AISMsg(ABC):
         self._mmsi = convert_int_to_bits(num=mmsi, bits_count=30)
 
     @property
-    def _payload_sixbits_list(self) -> list:
+    def _payload_sixbits_list(self) -> List[str]:
         """
         Returns msg payload as a list of six-character (bits) items.
         """
@@ -146,8 +146,7 @@ class AISMsgType1(AISMsg):
             f'{self.spare}{self.raim}{self.radio_status}'
 
     def __str__(self) -> str:
-        nmea_output = f'AIVDM,1,1,,A,{self.encode()},0'
-        return f'!{nmea_output}*{nmea_checksum(nmea_output)}\r\n'
+        return f'{self.encode()}'
 
 
 class AISMsgType5(AISMsg):
@@ -308,6 +307,9 @@ class AISMsgType5(AISMsg):
                f'{self.ship_name}{self.ship_type}{self.dimension}{self.pos_fix_type}{self.eta}{self.draught}' \
                f'{self.destination}{self.dte}{self.spare}'
 
+    def __str__(self) -> str:
+        return f'{self.encode()}'
+
 
 class NMEAMessage:
     """
@@ -321,7 +323,7 @@ class NMEAMessage:
         self.number_of_sentences = len(self.payload_parts)
         self.ais_channel = 'A'
 
-    def get_sentences(self) -> list:
+    def get_sentences(self) -> List[str]:
         """
         Return list of NMEA sentences.
         """

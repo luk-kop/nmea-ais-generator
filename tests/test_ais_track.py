@@ -1,6 +1,7 @@
 import pytest
 
 from ais_track import AISTrackList, ShipDimension, ShipEta
+from nmea_msg import AISMsgType1, AISMsgType5
 
 
 def test_ais_track_list_single(dummy_ais_tracks_list_single):
@@ -478,16 +479,36 @@ def test_ship_eta_attrs_default_values_incorrect():
     assert eta.minute != 0
 
 
-def test_generate_payload_type_1(dummy_ais_tracks_list_single):
+def test_generate_payload_type_1_type(dummy_ais_tracks_list_single):
     track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
     track = track_list.tracks[0]
-    assert track.generate_payload_type_1() == '133m@ogP00PD;88MD5MTDww@0D7k'
+    assert isinstance(track.generate_msg_type_1(), AISMsgType1)
 
 
-def test_generate_payload_type_5(dummy_ais_tracks_list_single):
+def test_generate_payload_type_1_encode(dummy_ais_tracks_list_single):
     track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
     track = track_list.tracks[0]
-    assert track.generate_payload_type_5() == '533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880'
+    assert track.generate_msg_type_1().encode() == '133m@ogP00PD;88MD5MTDww@0D7k'
+
+
+def test_generate_payload_type_5_type(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert isinstance(track.generate_msg_type_5(), AISMsgType5)
+
+
+def test_generate_payload_type_5_encode(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.generate_msg_type_5().encode() == '533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880'
+
+
+def test_generate_nmea_list_of_str(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    for msg in track.generate_nmea():
+        assert isinstance(msg, str)
+
 
 
 

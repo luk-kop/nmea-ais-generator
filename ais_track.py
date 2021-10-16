@@ -4,11 +4,14 @@ from pydantic import BaseModel, validator
 
 from nmea_utils import add_padding
 from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii, ShipDimension, ShipEta
-from nmea_msg import AISMsgType1, AISMsgType5
+from nmea_msg import AISMsgType1, AISMsgType5, NMEAMessage
 from constants import NavigationStatus, ShipType
 
 
 class AISTrack(BaseModel):
+    """
+    Class represents single AIS track.
+    """
     mmsi: int
     nav_status: int
     lon: float
@@ -111,44 +114,84 @@ class AISTrack(BaseModel):
             raise ValueError(f'Invalid {field.name} {value}. Should be in 0-60 range.')
         return value
 
-    def generate_nmea(self) -> str:
+    def generate_nmea(self) -> List[str]:
         """
-        Generate NMEA msgs for AISTrack.
+        Generate list of NMEA msgs for current AISTrack.
         """
-        pass
+        payloads = [self.generate_msg_type_1(), self.generate_msg_type_5()]
+        msgs = []
+        for payload in payloads:
+            msgs += NMEAMessage(payload=payload).get_sentences()
+        return msgs
 
-    def generate_payload_type_1(self) -> str:
+    def generate_msg_type_1(self) -> AISMsgType1:
         """
-        Generates payload for AIS Type 1 msg.
+        Generates AIS Type 1 msg object.
         """
-        payload = AISMsgType1(mmsi=self.mmsi,
-                              lon=self.lon,
-                              lat=self.lat,
-                              course=self.course,
-                              nav_status=self.nav_status,
-                              speed=self.speed,
-                              timestamp=self.timestamp).encode()
-        return payload
+        msg = AISMsgType1(mmsi=self.mmsi,
+                          lon=self.lon,
+                          lat=self.lat,
+                          course=self.course,
+                          nav_status=self.nav_status,
+                          speed=self.speed,
+                          timestamp=self.timestamp)
+        return msg
 
-    def generate_payload_type_5(self) -> str:
+    def generate_msg_type_5(self) -> AISMsgType5:
         """
-        Generates payload for AIS Type 5 msg.
+        Generates AIS Type 5 msg object.
         """
-        payload = AISMsgType5(mmsi=self.mmsi,
-                              imo=self.imo,
-                              call_sign=self.call_sign,
-                              ship_name=self.ship_name,
-                              ship_type=self.ship_type,
-                              dimension=self.dimension,
-                              eta=self.eta,
-                              draught=self.draught,
-                              destination=self.destination).encode()
-        return payload
+        msg = AISMsgType5(mmsi=self.mmsi,
+                          imo=self.imo,
+                          call_sign=self.call_sign,
+                          ship_name=self.ship_name,
+                          ship_type=self.ship_type,
+                          dimension=self.dimension,
+                          eta=self.eta,
+                          draught=self.draught,
+                          destination=self.destination)
+        return msg
 
 
 class AISTrackList(BaseModel):
+    """
+    Class represents list of AISTrack objects.
+    """
     tracks: List[AISTrack]
 
 
 if __name__ == '__main__':
-    pass
+    eta_dict = {
+        'month': 5,
+        'day': 15,
+        'hour': 14,
+        'minute': 0
+    }
+    dimension_dict = {
+        'to_bow': 225,
+        'to_stern': 70,
+        'to_port': 1,
+        'to_starboard': 31
+    }
+    tracks = [
+        {
+            'mmsi': 205344990,
+            'nav_status': 15,
+            'lon': 4.407046666667,
+            'lat': 51.229636666667,
+            'speed': 0,
+            'course': 110.7,
+            'imo': 9134270,
+            'call_sign': '3FOF8',
+            'ship_name': 'EVER DIADEM',
+            'ship_type': 70,
+            'dimension': dimension_dict,
+            'eta': eta_dict,
+            'draught': 12.2,
+            'destination': 'NEW YORK',
+            'timestamp': 40
+        }
+    ]
+    track_list = AISTrackList(tracks=tracks)
+    track = track_list.tracks[0]
+    print(track.generate_nmea())
