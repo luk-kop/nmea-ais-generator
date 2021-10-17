@@ -189,6 +189,38 @@ def test_ais_track_attr_course_incorrect_below(dummy_ais_tracks_list_single):
         track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
 
 
+def test_ais_track_attr_true_heading_default(dummy_ais_tracks_list_single):
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.true_heading == 511
+
+
+def test_ais_track_attr_course_min(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['course'] = 0
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.course == 0
+
+
+def test_ais_track_attr_true_heading_max(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['true_heading'] = 360
+    track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+    track = track_list.tracks[0]
+    assert track.true_heading == 360
+
+
+def test_ais_track_attr_true_heading_incorrect_above(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['true_heading'] = 361
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
+def test_ais_track_attr_true_heading_incorrect_below(dummy_ais_tracks_list_single):
+    dummy_ais_tracks_list_single[0]['true_heading'] = -1
+    with pytest.raises(Exception):
+        track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
+
+
 def test_ais_track_attr_imo(dummy_ais_tracks_list_single):
     dummy_ais_tracks_list_single[0]['imo'] = 9134270
     track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)

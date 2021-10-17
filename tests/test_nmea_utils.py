@@ -31,8 +31,8 @@ def test_get_char_of_ascii_code():
     assert get_char_of_ascii_code(ascii_code=119) != 'x'
 
 
-def test_convert_int_to_bits():
-    test_dir = {
+def test_convert_int_to_bits_unsigned_int():
+    int_to_bits = {
         1: {
             'bits_count': 4,
             'bits_str': '0001'
@@ -54,8 +54,36 @@ def test_convert_int_to_bits():
             'bits_str': '0110011'
         },
     }
-    for int_num, bits in test_dir.items():
+    for int_num, bits in int_to_bits.items():
         assert convert_int_to_bits(num=int_num, bits_count=bits['bits_count']) == bits['bits_str']
+    assert convert_int_to_bits(num=15) == '001111'
+
+
+def test_convert_int_to_bits_signed_int():
+    int_to_bits = {
+        2644228: {
+            'bits_count': 28,
+            'bits_str': '0000001010000101100100000100'
+        },
+        -2644228: {
+            'bits_count': 28,
+            'bits_str': '1111110101111010011011111100'
+        },
+        -123456: {
+            'bits_count': 24,
+            'bits_str': '111111100001110111000000'
+        },
+        27: {
+            'bits_count': 6,
+            'bits_str': '011011'
+        },
+        -51: {
+            'bits_count': 8,
+            'bits_str': '11001101'
+        },
+    }
+    for int_num, bits in int_to_bits.items():
+        assert convert_int_to_bits(num=int_num, bits_count=bits['bits_count'], signed=True) == bits['bits_str']
     assert convert_int_to_bits(num=15) == '001111'
 
 

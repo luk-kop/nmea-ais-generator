@@ -30,6 +30,7 @@ class MmsiCountry(IntEnum):
     Estonia = 276
     Lithuania = 277
     Slovenia = 278
+    Bahamas = 311
     Canada = 316
     USA = 338
 

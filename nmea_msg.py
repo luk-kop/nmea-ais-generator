@@ -60,7 +60,7 @@ class AISMsgType1(AISMsg):
     Total number of bits in one AIS msg type 1 payload - 168 bits.
     Payload example: 133m@ogP00PD;88MD5MTDww@2D7k
     """
-    def __init__(self, mmsi: int,  lon: float, lat: float, course: float, nav_status: int = 15, speed: int = 0, timestamp: int = 60) -> None:
+    def __init__(self, mmsi: int,  lon: float, lat: float, course: float,  true_heading: int = 511, nav_status: int = 15, speed: int = 0, timestamp: int = 60) -> None:
         super().__init__(mmsi)
         self.msg_type = convert_int_to_bits(num=1, bits_count=6)
         self.nav_status = nav_status
@@ -73,7 +73,7 @@ class AISMsgType1(AISMsg):
         self.lat = lat
         self.course = course
         # True heading - default value, not available (511)
-        self.heading = convert_int_to_bits(num=511, bits_count=9)
+        self.true_heading = true_heading
         self.timestamp = timestamp
         self.maneuver = convert_int_to_bits(num=0, bits_count=2)
         self.spare = convert_int_to_bits(num=0, bits_count=3)
@@ -96,7 +96,7 @@ class AISMsgType1(AISMsg):
 
     @lon.setter
     def lon(self, lon) -> None:
-        self._lon = convert_int_to_bits(num=int(lon * 600000), bits_count=28)
+        self._lon = convert_int_to_bits(num=int(lon * 600000), bits_count=28, signed=True)
 
     @property
     def lat(self) -> str:
@@ -104,7 +104,7 @@ class AISMsgType1(AISMsg):
 
     @lat.setter
     def lat(self, lat) -> None:
-        self._lat = convert_int_to_bits(num=int(lat * 600000), bits_count=27)
+        self._lat = convert_int_to_bits(num=int(lat * 600000), bits_count=27, signed=True)
 
     @property
     def course(self) -> str:
@@ -115,6 +115,16 @@ class AISMsgType1(AISMsg):
         if course < 0 or course > 360:
             raise ValueError(f'Invalid course {course}. Should be in 0-360 range.')
         self._course = convert_int_to_bits(num=int(course * 10), bits_count=12)
+
+    @property
+    def true_heading(self) -> str:
+        return self._true_heading
+
+    @true_heading.setter
+    def true_heading(self, true_heading) -> None:
+        if true_heading != 511 and (true_heading < 0 or true_heading > 360):
+            raise ValueError(f'Invalid heading {true_heading}. Should be in 0-360 range.')
+        self._true_heading = convert_int_to_bits(num=true_heading, bits_count=9)
 
     @property
     def speed(self) -> str:
@@ -142,7 +152,7 @@ class AISMsgType1(AISMsg):
         Returns msg payload as a bit string.
         """
         return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.nav_status}{self.rot}{self.speed}' \
-            f'{self.accuracy}{self.lon}{self.lat}{self.course}{self.heading}{self.timestamp}{self.maneuver}' \
+            f'{self.accuracy}{self.lon}{self.lat}{self.course}{self.true_heading}{self.timestamp}{self.maneuver}' \
             f'{self.spare}{self.raim}{self.radio_status}'
 
     def __str__(self) -> str:

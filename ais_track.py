@@ -18,7 +18,8 @@ class AISTrack(BaseModel):
     lat: float
     speed: float
     course: float
-    imo: int
+    true_heading: int = 511
+    imo: int = 0000000
     call_sign: str
     ship_name: str
     ship_type: int
@@ -63,8 +64,11 @@ class AISTrack(BaseModel):
             raise ValueError(f'Invalid {field.name} {value}. Should be in 0-102.2 range.')
         return value
 
-    @validator('course')
+    @validator('course', 'true_heading')
     def check_course_value(cls, value, field):
+        if field.name == 'true_heading' and value == 511:
+            # Default true_heading value
+            return value
         if value < 0 or value > 360:
             raise ValueError(f'Invalid {field.name} {value}. Should be in 0-360 range.')
         return value
@@ -132,6 +136,7 @@ class AISTrack(BaseModel):
                           lon=self.lon,
                           lat=self.lat,
                           course=self.course,
+                          true_heading=self.true_heading,
                           nav_status=self.nav_status,
                           speed=self.speed,
                           timestamp=self.timestamp)

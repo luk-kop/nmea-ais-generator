@@ -12,10 +12,13 @@ def get_char_of_ascii_code(ascii_code: int) -> str:
     return chr(ascii_code)
 
 
-def convert_int_to_bits(num: int, bits_count: int = 6) -> str:
+def convert_int_to_bits(num: int, bits_count: int = 6, signed: bool = False) -> str:
     """
     Converts int to bits string.
     """
+    if signed:
+        if num < 0:
+            return format(num & (pow(2, bits_count) - 1), f'0{bits_count}b')
     return format(num, f'0{bits_count}b')
 
 
