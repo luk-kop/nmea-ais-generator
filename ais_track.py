@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator
 from nmea_utils import add_padding
 from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii, ShipDimension, ShipEta
 from nmea_msg import AISMsgType1, AISMsgType5, NMEAMessage
-from constants import NavigationStatus, ShipType
+from constants import NavigationStatusEnum, ShipTypeEnum
 
 
 class AISTrack(BaseModel):
@@ -13,7 +13,7 @@ class AISTrack(BaseModel):
     Class represents single AIS track.
     """
     mmsi: int
-    nav_status: int
+    nav_status: NavigationStatusEnum
     lon: float
     lat: float
     speed: float
@@ -22,7 +22,7 @@ class AISTrack(BaseModel):
     imo: int = 0000000
     call_sign: str
     ship_name: str
-    ship_type: int
+    ship_type: ShipTypeEnum
     dimension: ShipDimension
     eta: ShipEta
     draught: float
@@ -38,12 +38,6 @@ class AISTrack(BaseModel):
             raise ValueError(f'Invalid {field.name} {value}. Should consist of 9 digits')
         elif not check_mmsi_mid_code(value):
             raise ValueError(f'Invalid {field.name} {value}. Invalid MID code.')
-        return value
-
-    @validator('nav_status')
-    def check_nav_status_value(cls, value, field):
-        if not NavigationStatus.has_value(value):
-            raise ValueError(f'Invalid {field.name} {value}.')
         return value
 
     @validator('lon')
@@ -96,12 +90,6 @@ class AISTrack(BaseModel):
         elif len(value) < required_chars_count:
             # Add padding, if necessary
             value = add_padding(text=value, required_length=required_chars_count)
-        return value
-
-    @validator('ship_type')
-    def check_ship_type_value(cls, value, field):
-        if not ShipType.has_value(value):
-            raise ValueError(f'Invalid {field.name} {value}.')
         return value
 
     @validator('draught')
@@ -163,40 +151,3 @@ class AISTrackList(BaseModel):
     Class represents list of AISTrack objects.
     """
     tracks: List[AISTrack]
-
-
-if __name__ == '__main__':
-    eta_dict = {
-        'month': 5,
-        'day': 15,
-        'hour': 14,
-        'minute': 0
-    }
-    dimension_dict = {
-        'to_bow': 225,
-        'to_stern': 70,
-        'to_port': 1,
-        'to_starboard': 31
-    }
-    tracks = [
-        {
-            'mmsi': 205344990,
-            'nav_status': 15,
-            'lon': 4.407046666667,
-            'lat': 51.229636666667,
-            'speed': 0,
-            'course': 110.7,
-            'imo': 9134270,
-            'call_sign': '3FOF8',
-            'ship_name': 'EVER DIADEM',
-            'ship_type': 70,
-            'dimension': dimension_dict,
-            'eta': eta_dict,
-            'draught': 12.2,
-            'destination': 'NEW YORK',
-            'timestamp': 40
-        }
-    ]
-    track_list = AISTrackList(tracks=tracks)
-    track = track_list.tracks[0]
-    print(track.generate_nmea())

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, root_validator
 
-from constants import MmsiCountry
+from constants import MmsiCountryEnum
 from nmea_utils import convert_int_to_bits
 
 
@@ -15,6 +15,18 @@ class ShipDimension(BaseModel):
 
     class Config:
         validate_assignment = True
+
+    @root_validator(pre=True)
+    def check_attrs_omitted(cls, values):
+        """
+        Set all attributes to 0 if any of the attributes are not passed in.
+        """
+        attrs = ['to_bow', 'to_stern', 'to_port', 'to_starboard']
+        for attr in attrs:
+            if attr not in values:
+                values = {k: 0 for k, v in values.items()}
+                return values
+        return values
 
     @validator('to_bow', 'to_stern')
     def check_to_bow_and_to_stern_value(cls, value, field):
@@ -99,7 +111,7 @@ def check_mmsi_mid_code(mmsi: int) -> bool:
     Checks whether MMSI number contain valid MID.
     """
     country_code = get_first_3_digits(mmsi)
-    return MmsiCountry.has_value(country_code)
+    return MmsiCountryEnum.has_value(country_code)
 
 
 def verify_imo(imo: int) -> bool:

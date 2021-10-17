@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 
-class MmsiCountry(IntEnum):
+class MmsiCountryEnum(IntEnum):
     """
     Maritime Identification Digits (MID). Only selected countries are listed.
     For all codes see: https://www.itu.int/en/ITU-R/terrestrial/fmd/Pages/mid.aspx
@@ -40,7 +40,7 @@ class MmsiCountry(IntEnum):
         return value in values
 
 
-class NavigationStatus(IntEnum):
+class NavigationStatusEnum(IntEnum):
     """
     Navigational status for AIS msg type 1.
     """
@@ -62,7 +62,7 @@ class NavigationStatus(IntEnum):
         return value in values
 
 
-class ShipType(IntEnum):
+class ShipTypeEnum(IntEnum):
     """
     Ship type codes for AIS msg type 5. Only selected ship types are listed.
     For all codes see: https://gpsd.gitlab.io/gpsd/AIVDM.html#_aivdmaivdo_sentence_layer
