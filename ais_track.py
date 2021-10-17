@@ -35,29 +35,25 @@ class AISTrack(BaseModel):
         validate_assignment = True
 
     @validator('mmsi')
-    def check_mmsi_value(cls, value, field):
+    def check_mmsi_value(cls, value):
         if len(str(value)) != 9:
-            raise ValueError(f'Invalid {field.name} {value}. Should consist of 9 digits')
+            raise ValueError(f'value {value} is invalid. Should consist of 9 digits.')
         elif not check_mmsi_mid_code(value):
-            raise ValueError(f'Invalid {field.name} {value}. Invalid MID code.')
+            raise ValueError(f'value {value} is invalid. Wrong MID code.')
         return value
 
-    @validator('lon')
-    def check_lon_value(cls, value, field):
-        if value < -180 or value > 180:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in -180 to 180 range.')
-        return value
-
-    @validator('lat')
-    def check_lat_value(cls, value, field):
-        if value < -90 or value > 90:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in -180 to 180 range.')
-        return value
-
-    @validator('speed')
-    def check_speed_value(cls, value, field):
-        if value < 0 or value > 102.2:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-102.2 range.')
+    @validator('lon', 'lat', 'speed', 'timestamp')
+    def check_lon_lat_speed_timestamp_values(cls, value, field):
+        valid_values = {
+            'lon': {'min': -180, 'max': 180},
+            'lat': {'min': -90, 'max': 90},
+            'speed': {'min': 0, 'max': 102.2},
+            'timestamp': {'min': 0, 'max': 60},
+        }
+        value_min = valid_values[field.name]['min']
+        value_max = valid_values[field.name]['max']
+        if value < value_min or value > value_max:
+            raise ValueError(f'value {value} is invalid. Should be in {value_min}-{value_max} range.')
         return value
 
     @validator('course', 'true_heading')
@@ -66,15 +62,15 @@ class AISTrack(BaseModel):
             # Default true_heading value
             return value
         if value < 0 or value > 360:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-360 range.')
+            raise ValueError(f'value {value} is invalid. Should be in 0-360 range.')
         return value
 
     @validator('imo')
     def check_imo_value(cls, value, field):
         if len(str(value)) != 7:
-            raise ValueError(f'Invalid {field.name} {value}. Should consist of 7 digits')
+            raise ValueError(f'value {value} is invalid. Should consist of 7 digits.')
         elif not verify_imo(imo=value):
-            raise ValueError(f'Invalid {field.name} {value}. Invalid IMO checksum.')
+            raise ValueError(f'value {value} is invalid. Wrong IMO checksum.')
         return value
 
     @validator('call_sign', 'ship_name', 'destination')
@@ -88,7 +84,7 @@ class AISTrack(BaseModel):
         if len(value) > required_chars_count:
             value = value[:required_chars_count]
         elif not verify_sixbit_ascii(value):
-            raise ValueError(f'Invalid {field.name} {value}. Invalid sixbit ASCII chars.')
+            raise ValueError(f'value {value} is invalid. Wrong sixbit ASCII chars.')
         elif len(value) < required_chars_count:
             # Add padding, if necessary
             value = add_padding(text=value, required_length=required_chars_count)
@@ -97,15 +93,9 @@ class AISTrack(BaseModel):
     @validator('draught')
     def check_draught_value(cls, value, field):
         if value < 0:
-            raise ValueError(f'Invalid {field.name} {value}. Should be 0 or greater.')
+            raise ValueError(f'value {value} is invalid. Should be 0 or greater.')
         elif value > 25.5:
             value = 25.5
-        return value
-
-    @validator('timestamp')
-    def check_timestamp_value(cls, value, field):
-        if value < 0 or value > 60:
-            raise ValueError(f'Invalid {field.name} {value}. Should be in 0-60 range.')
         return value
 
     def generate_nmea(self) -> List[str]:
