@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime
 
 from pydantic import BaseModel, validator
 
@@ -28,6 +29,7 @@ class AISTrack(BaseModel):
     draught: float
     destination: str
     timestamp: int = 60
+    _updated_at: float = datetime.utcnow().timestamp()
 
     class Config:
         validate_assignment = True
