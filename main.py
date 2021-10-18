@@ -49,7 +49,7 @@ class AISDataTx:
                 for track in self.track_list.tracks:
                     # track.update_position()
                     nmea_msgs += track.generate_nmea()
-                udp.send(data=nmea_msgs)
+                udp.run(data=nmea_msgs)
                 time.sleep(timer - (time.perf_counter() - timer_start))
             except KeyboardInterrupt:
                 print('\nClosing the script...\n')
@@ -72,9 +72,23 @@ class AISDataTx:
 
 
 if __name__ == '__main__':
-    clients = {
-        '127.0.0.1': 1111,
-        '172.16.208.131': 1002
-    }
+    clients = [
+        {
+            'host': '127.0.0.1',
+            'port': 1111
+        },
+        {
+            'host': '127.0.0.1',
+            'port': 1112
+        },
+        {
+            'host': '127.0.0.1',
+            'port': 1113
+        },
+        {
+            'host': '172.16.208.131',
+            'port': 1002
+        },
+    ]
 
-    AISDataTx().run(clients=clients, timer=10)
+    AISDataTx().run(clients=clients, timer=20)

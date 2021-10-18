@@ -24,9 +24,9 @@ class AISTrack(BaseModel):
     call_sign: str
     ship_name: str
     ship_type: ShipTypeEnum
-    dimension: ShipDimension
-    eta: ShipEta
-    draught: float
+    dimension: ShipDimension = ShipDimension()
+    eta: ShipEta = ShipEta()
+    draught: float = 0
     destination: str
     timestamp: int = 60
     _updated_at: float = datetime.utcnow().timestamp()
