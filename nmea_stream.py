@@ -1,23 +1,39 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 import socket
 import time
 import sys
+import threading
 
 
 class UDPStream:
     """
     Class represents a stream of UDP data sent to selected hosts.
     """
-    def __init__(self, clients: Dict[str, int]):
+    def __init__(self, clients: List[Dict[str, Any]]) -> None:
         self.clients = clients
+        self.data_to_send = []
 
-    def send(self, data: List[str]):
-        for ip_address, port in self.clients.items():
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                for nmea in data:
-                    try:
-                        s.sendto(nmea.encode(), (ip_address, port))
-                        time.sleep(0.05)
-                    except OSError as err:
-                        print(f'Error: {err.strerror}')
-                        sys.exit()
+    def run(self, data: List[str]) -> None:
+        """
+        Starts UDP stream tx.
+        """
+        self.data_to_send = data
+        for client in self.clients:
+            host, port = client['host'], client['port']
+            # Send data to each host:port in a separate thread
+            threading.Thread(target=self.send_data,
+                             kwargs={'host': host, 'port': port},
+                             name=f'ais_thread_{host}:{port}').start()
+
+    def send_data(self, host: str, port: int) -> None:
+        """
+        Sends UDP data stream to specified host:port pair.
+        """
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            for nmea in self.data_to_send:
+                try:
+                    s.sendto(nmea.encode(), (host, port))
+                    time.sleep(0.05)
+                except OSError as err:
+                    print(f'Error: {err.strerror}')
+                    sys.exit()

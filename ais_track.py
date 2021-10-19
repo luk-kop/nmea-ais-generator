@@ -33,6 +33,7 @@ class AISTrack(BaseModel):
 
     class Config:
         validate_assignment = True
+        underscore_attrs_are_private = True
 
     @validator('mmsi')
     def check_mmsi_value(cls, value):
