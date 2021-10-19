@@ -120,6 +120,21 @@ class AISMsgType1ConstsEnum(IntEnum):
         return {k: v.value for k, v in cls.__members__.items()}
 
 
+class AISMsgType5ConstsEnum(IntEnum):
+    """
+    Constant data for AIS msg type 5.
+    """
+    msg_type = 5
+    ais_version = 2
+    pos_fix_type = 1
+    dte = 0
+    spare_type_5 = 0
+
+    @classmethod
+    def dict(cls) -> Dict[str, int]:
+        return {k: v.value for k, v in cls.__members__.items()}
+
+
 class FieldBitsCountEnum(IntEnum):
     """
     Bits count for AIS msg fields.
@@ -149,7 +164,20 @@ class FieldBitsCountEnum(IntEnum):
     pos_fix_type = 4
     draught = 8
     destination = 120
+    dte = 1
 
     @classmethod
     def dict(cls) -> Dict[str, int]:
         return {k: v.value for k, v in cls.__members__.items()}
+
+
+class FieldCharsCountEnum(IntEnum):
+    """
+    Chars count for AIS msg fields.
+    """
+    mmsi = 9
+    imo = 7
+    call_sign = 7
+    ship_name = 20
+    destination = 20
+

@@ -6,7 +6,7 @@ from pydantic import BaseModel, validator
 from nmea_utils import add_padding
 from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii, ShipDimension, ShipEta
 from nmea_msg import AISMsgPayloadType1, AISMsgType5, NMEAMessage
-from constants import NavigationStatusEnum, ShipTypeEnum
+from constants import NavigationStatusEnum, ShipTypeEnum, FieldCharsCountEnum
 
 
 class AISTrack(BaseModel):
@@ -39,8 +39,8 @@ class AISTrack(BaseModel):
         underscore_attrs_are_private = True
 
     @validator('mmsi')
-    def check_mmsi_value(cls, value) -> int:
-        if len(str(value)) != 9:
+    def check_mmsi_value(cls, value, field) -> int:
+        if len(str(value)) != FieldCharsCountEnum[field.name]:
             raise ValueError(f'field value {value} is invalid. Should consist of 9 digits.')
         elif not check_mmsi_mid_code(value):
             raise ValueError(f'field value {value} is invalid. Wrong MID code.')
@@ -70,8 +70,8 @@ class AISTrack(BaseModel):
         return value
 
     @validator('imo')
-    def check_imo_value(cls, value) -> int:
-        if len(str(value)) != 7:
+    def check_imo_value(cls, value, field) -> int:
+        if len(str(value)) != FieldCharsCountEnum[field.name]:
             raise ValueError(f'field value {value} is invalid. Should consist of 7 digits.')
         elif not verify_imo(imo=value):
             raise ValueError(f'field value {value} is invalid. Wrong IMO checksum.')
@@ -79,12 +79,7 @@ class AISTrack(BaseModel):
 
     @validator('call_sign', 'ship_name', 'destination')
     def check_sixbit_text_value(cls, value, field) -> str:
-        field_to_chars_count = {
-            'call_sign': 7,
-            'ship_name': 20,
-            'destination': 20
-        }
-        required_chars_count = field_to_chars_count[field.name]
+        required_chars_count = FieldCharsCountEnum[field.name]
         if len(value) > required_chars_count:
             value = value[:required_chars_count]
         elif not verify_sixbit_ascii(value):
