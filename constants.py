@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import Dict
 
 
 class MmsiCountryEnum(IntEnum):
@@ -93,6 +94,62 @@ class ShipTypeEnum(IntEnum):
     Other_type = 90
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value) -> bool:
         values = set(item.value for item in cls)
         return value in values
+
+
+class AISMsgType1ConstsEnum(IntEnum):
+    """
+    Constant data for AIS msg type 1.
+    """
+    maneuver = 0
+    msg_type = 1
+    # Position accuracy - high (1)
+    pos_accuracy = 1
+    # RAIM - not in use (0)
+    raim = 0
+    # ROT - default value, no turn info available (128)
+    rot = 128
+    spare_type_1 = 0
+    # Dummy SOTDMA data - bits '0010100000111110011'
+    radio_status = 82419
+
+    @classmethod
+    def dict(cls) -> Dict[str, int]:
+        return {k: v.value for k, v in cls.__members__.items()}
+
+
+class FieldBitsCountEnum(IntEnum):
+    """
+    Bits count for AIS msg fields.
+    """
+    mmsi = 30
+    repeat_indicator = 2
+    msg_type = 6
+    nav_status = 4
+    rot = 8
+    speed = 10
+    pos_accuracy = 1
+    lon = 28
+    lat = 27
+    course = 12
+    true_heading = 9
+    timestamp = 6
+    maneuver = 2
+    spare_type_1 = 3
+    spare_type_5 = 1
+    raim = 1
+    radio_status = 19
+    ais_version = 2
+    imo = 30
+    call_sign = 42
+    ship_name = 120
+    ship_type = 8
+    pos_fix_type = 4
+    draught = 8
+    destination = 120
+
+    @classmethod
+    def dict(cls) -> Dict[str, int]:
+        return {k: v.value for k, v in cls.__members__.items()}
