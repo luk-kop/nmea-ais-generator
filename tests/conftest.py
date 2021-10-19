@@ -1,6 +1,6 @@
 from pytest import fixture
 
-from nmea_msg import AISMsgType5, AISMsgPayloadType1
+from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
 from ais_utils import ShipDimension, ShipEta
 
 
@@ -27,20 +27,6 @@ def dummy_ship_eta():
 
 
 @fixture
-def dummy_ais_msg_type_5(dummy_ship_dimension, dummy_ship_eta):
-    msg = AISMsgType5(mmsi=205344990,
-                      imo=9134270,
-                      call_sign='3FOF8',
-                      ship_name='EVER DIADEM',
-                      ship_type=70,
-                      dimension=ShipDimension(**dummy_ship_dimension),
-                      eta=ShipEta(**dummy_ship_eta),
-                      draught=12.2,
-                      destination='NEW YORK')
-    return msg
-
-
-@fixture
 def dummy_ais_msg_payload_type_1():
     msg_payload = AISMsgPayloadType1(mmsi=205344990,
                                      speed=0,
@@ -51,6 +37,19 @@ def dummy_ais_msg_payload_type_1():
                                      timestamp=40)
     return msg_payload
 
+
+@fixture
+def dummy_ais_msg_payload_type_5(dummy_ship_dimension, dummy_ship_eta):
+    msg_payload = AISMsgPayloadType5(mmsi=205344990,
+                                     imo=9134270,
+                                     call_sign='3FOF8',
+                                     ship_name='EVER DIADEM',
+                                     ship_type=70,
+                                     dimension=ShipDimension(**dummy_ship_dimension),
+                                     eta=ShipEta(**dummy_ship_eta),
+                                     draught=12.2,
+                                     destination='NEW YORK')
+    return msg_payload
 
 
 @fixture

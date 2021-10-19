@@ -1,10 +1,11 @@
 import pytest
 
 from nmea_msg import NMEAMessage
+from nmea_utils import convert_ais_payload_to_bits
 
 
-def test_nmea_msg_multi_sentence(dummy_ais_msg_type_5):
-    nmea_msg = NMEAMessage(payload=dummy_ais_msg_type_5)
+def test_nmea_msg_multi_sentence(dummy_ais_msg_payload_type_5):
+    nmea_msg = NMEAMessage(payload=dummy_ais_msg_payload_type_5)
     test_sentences = [
         '!AIVDM,2,1,1,A,533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp8,0*7D\r\n',
         '!AIVDM,2,2,1,A,88888888880,2*25\r\n'
@@ -149,3 +150,129 @@ def test_ais_msg_payload_type_1_encode(dummy_ais_msg_payload_type_1):
     msg_payload = dummy_ais_msg_payload_type_1
     desired_output = '133m@ogP00PD;88MD5MTDww@0D7k'
     assert str(msg_payload) == desired_output
+
+
+def test_ais_msg_payload_type_5_encode(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    desired_output = '533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp888888888880'
+    assert str(msg_payload) == desired_output
+
+
+def test_ais_msg_payload_type_5_before_encode(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert msg_payload.fill_bits == 0
+    assert len(msg_payload.payload_bits) == 424
+
+
+def test_ais_msg_payload_type_5_after_encode_fill_bits(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    msg_payload.encode()
+    assert msg_payload.fill_bits == 2
+
+
+def test_ais_msg_payload_type_5_after_encode_payload_chars_length(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    ais_payload = msg_payload.encode()
+    # payload with fill-bits added
+    assert len(ais_payload) == 71
+
+
+def test_ais_msg_payload_type_5_after_encode_payload_bits_length(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    ais_payload = msg_payload.encode()
+    # payload with fill-bits added
+    payload_bits = convert_ais_payload_to_bits(payload=ais_payload)
+    assert len(payload_bits) == 426
+
+
+def test_ais_msg_payload_type_5_constants_bits(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    desired_bits = {
+        'msg_type': '000101',
+        'ais_version': '10',
+        'pos_fix_type': '0001',
+        'dte': '0',
+        'spare_type_5': '0',
+    }
+    assert msg_payload._constants_bits == desired_bits
+
+
+def test_ais_msg_payload_type_5_mmsi(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert msg_payload.mmsi == 205344990
+    assert len(msg_payload._fields_to_bits()['mmsi']) == 30
+    assert msg_payload._fields_to_bits()['mmsi'] == '001100001111010101000011011110'
+
+
+def test_ais_msg_payload_type_5_imo(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert msg_payload.imo == 9134270
+    assert len(msg_payload._fields_to_bits()['imo']) == 30
+    assert msg_payload._fields_to_bits()['imo'] == '000000100010110110000010111110'
+
+
+def test_ais_msg_payload_type_5_call_sign(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert msg_payload.call_sign == '3FOF8'
+    assert len(msg_payload._fields_to_bits()['call_sign']) == 42
+    assert msg_payload._fields_to_bits()['call_sign'] == '110011000110001111000110111000100000100000'
+
+
+def test_ais_msg_payload_type_5_ship_name(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    desired_output = '0001010101100001010100101000000001000010010000010001000001010011011000001000001000001000' \
+                     '00100000100000100000100000100000'
+    assert msg_payload.ship_name == 'EVER DIADEM'
+    assert len(msg_payload._fields_to_bits()['ship_name']) == 120
+    assert msg_payload._fields_to_bits()['ship_name'] == desired_output
+
+
+def test_ais_msg_payload_type_5_ship_type(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert msg_payload.ship_type.value == 70
+    assert len(msg_payload._fields_to_bits()['ship_type']) == 8
+    assert msg_payload._fields_to_bits()['ship_type'] == '01000110'
+
+
+def test_ais_msg_payload_type_5_dimension(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert len(msg_payload._fields_to_bits()['dimension']) == 30
+    assert msg_payload._fields_to_bits()['dimension'] == '011100001001000110000001011111'
+
+
+def test_ais_msg_payload_type_5_eta(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert len(msg_payload._fields_to_bits()['eta']) == 20
+    assert msg_payload._fields_to_bits()['eta'] == '01010111101110000000'
+
+
+def test_ais_msg_payload_type_5_draught(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    assert msg_payload.draught == 12.2
+    assert len(msg_payload._fields_to_bits()['draught']) == 8
+    assert msg_payload._fields_to_bits()['draught'] == '01111010'
+
+
+def test_ais_msg_payload_type_5_draught_min(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    msg_payload.draught = 0
+    assert msg_payload.draught == 0
+    assert len(msg_payload._fields_to_bits()['draught']) == 8
+    assert msg_payload._fields_to_bits()['draught'] == '00000000'
+
+
+def test_ais_msg_payload_type_5_draught_max(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    msg_payload.draught = 25.5
+    assert msg_payload.draught == 25.5
+    assert len(msg_payload._fields_to_bits()['draught']) == 8
+    assert msg_payload._fields_to_bits()['draught'] == '11111111'
+
+
+def test_ais_msg_payload_type_5_destination(dummy_ais_msg_payload_type_5):
+    msg_payload = dummy_ais_msg_payload_type_5
+    desired_output = '00111000010101011110000001100100111101001000101110000010000010000010000010000010000010000010' \
+                     '0000100000100000100000100000'
+    assert msg_payload.destination == 'NEW YORK'
+    assert len(msg_payload._fields_to_bits()['destination']) == 120
+    assert msg_payload._fields_to_bits()['destination'] == desired_output

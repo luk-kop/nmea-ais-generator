@@ -1,7 +1,7 @@
 import pytest
 
-from ais_track import AISTrackList, ShipDimension, ShipEta
-from nmea_msg import AISMsgPayloadType1, AISMsgType5
+from ais_track import AISTrackList, ShipEta
+from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
 
 
 def test_ais_track_list_single(dummy_ais_tracks_list_single):
@@ -466,7 +466,7 @@ def test_generate_payload_type_1_encode(dummy_ais_tracks_list_single):
 def test_generate_payload_type_5_type(dummy_ais_tracks_list_single):
     track_list = AISTrackList(tracks=dummy_ais_tracks_list_single)
     track = track_list.tracks[0]
-    assert isinstance(track.generate_msg_type_5(), AISMsgType5)
+    assert isinstance(track.generate_msg_type_5(), AISMsgPayloadType5)
 
 
 def test_generate_payload_type_5_encode(dummy_ais_tracks_list_single):
