@@ -1,10 +1,135 @@
 from abc import ABC, abstractmethod
 import textwrap
-from typing import Union, List
+from typing import Union, List, Dict
+
+from pydantic import BaseModel
 
 from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
 from ais_utils import ShipDimension, ShipEta
+from constants import FieldBitsCountEnum, AISMsgType1ConstsEnum, NavigationStatusEnum
+
+
+class AISMsgPayload(BaseModel, ABC):
+    """
+    Class represent an abstract class which acts as a parent class for other AIS msgs.
+    """
+    repeat_indicator: int = 0
+    mmsi: int
+    # Number of fill bits requires to pad the data payload to a 6 bit boundary (range 0-5).
+    fill_bits: int = 0
+
+    @abstractmethod
+    def payload_bits(self) -> None:
+        pass
+
+    @property
+    def _payload_sixbits_list(self) -> List[str]:
+        """
+        Returns msg payload as a list of six-character (bits) items.
+        """
+        return textwrap.wrap(self.payload_bits, 6)
+
+    def encode(self) -> str:
+        """
+        Returns message payload as a string of ASCII chars (AIVDM Payload Armoring).
+        Adds fill-bits (padding) to last six-bit item, if necessary.
+        """
+        payload = ''
+        for item in self._payload_sixbits_list:
+            # Add fill-bits (padding) to last six-bit item, if necessary
+            while len(item) < 6:
+                item += '0'
+                self.fill_bits += 1
+            decimal_num = convert_bits_to_int(bits=item)
+            ascii_code = convert_decimal_to_ascii_code(decimal_num=decimal_num)
+            payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
+            payload += payload_char
+        return payload
+
+
+class AISMsgPayloadType1(AISMsgPayload):
+    """
+    Class represents payload of AIS msg type 1 (Position Report Class A).
+    Total number of bits in one AIS msg type 1 payload - 168 bits.
+    Payload example: 133m@ogP00PD;88MD5MTDww@2D7k
+    """
+    nav_status: NavigationStatusEnum
+    speed: float = 0
+    lon: float
+    lat: float
+    course: float
+    # True heading - default value, not available (511)
+    true_heading: int = 511
+    timestamp: int = 60
+
+    @property
+    def _constants_bits(self) -> Dict[str, str]:
+        """
+        Returns AIS const fields in bits.
+        """
+        bits, const = FieldBitsCountEnum, AISMsgType1ConstsEnum.dict()
+        return {name: convert_int_to_bits(num=value, bits_count=bits[name]) for name, value in const.items()}
+
+    @property
+    def payload_bits(self) -> str:
+        """
+        Returns msg payload as a bit string.
+        """
+        # Constants in bits
+        consts = self._constants_bits
+        # Object attrs (fields) in bits
+        fields = self._fields_to_bits()
+        payload_fields_list = [
+            consts['msg_type'],
+            fields['repeat_indicator'],
+            fields['mmsi'],
+            fields['nav_status'],
+            consts['rot'],
+            fields['speed'],
+            consts['pos_accuracy'],
+            fields['lon'],
+            fields['lat'],
+            fields['course'],
+            fields['true_heading'],
+            fields['timestamp'],
+            consts['maneuver'],
+            consts['spare_type_1'],
+            consts['raim'],
+            consts['radio_status']
+        ]
+        return ''.join(payload_fields_list)
+
+    def _fields_to_bits(self) -> Dict[str, str]:
+        """
+        Converts AIS fields (attrs) values to bits.
+        """
+        fields: dict = self.dict(exclude={'fill_bits'})
+        fields_in_bits = {}
+
+        for field, value in fields.items():
+            bits_count = FieldBitsCountEnum[field]
+            if field in ['lon', 'lat']:
+                # Conversion for 'lat' & 'lon' fields.
+                value = int(value * 600000)
+                bits_value = convert_int_to_bits(num=value, bits_count=bits_count, signed=True)
+            else:
+                if field in ['course', 'speed']:
+                    # Change value for 'course' & 'speed' fields.
+                    value = int(value * 10)
+                bits_value = convert_int_to_bits(num=value, bits_count=bits_count)
+            fields_in_bits[field] = bits_value
+        return fields_in_bits
+
+    def __str__(self) -> str:
+        return f'{self.encode()}'
+
+    class Config:
+        """
+        Pydantic config class.
+        """
+        validate_assignment = True
+        underscore_attrs_are_private = True
 
 
 class AISMsg(ABC):
@@ -52,111 +177,6 @@ class AISMsg(ABC):
             payload_char = get_char_of_ascii_code(ascii_code=ascii_code)
             payload += payload_char
         return payload
-
-
-class AISMsgType1(AISMsg):
-    """
-    Class represents payload of AIS msg type 1 (Position Report Class A).
-    Total number of bits in one AIS msg type 1 payload - 168 bits.
-    Payload example: 133m@ogP00PD;88MD5MTDww@2D7k
-    """
-    def __init__(self, mmsi: int,  lon: float, lat: float, course: float,  true_heading: int = 511, nav_status: int = 15, speed: int = 0, timestamp: int = 60) -> None:
-        super().__init__(mmsi)
-        self.msg_type = convert_int_to_bits(num=1, bits_count=6)
-        self.nav_status = nav_status
-        # ROT - default value, no turn info available (128)
-        self.rot = convert_int_to_bits(num=128, bits_count=8)
-        self.speed = speed
-        # Position accuracy - high (1)
-        self.accuracy = convert_int_to_bits(num=1, bits_count=1)
-        self.lon = lon
-        self.lat = lat
-        self.course = course
-        # True heading - default value, not available (511)
-        self.true_heading = true_heading
-        self.timestamp = timestamp
-        self.maneuver = convert_int_to_bits(num=0, bits_count=2)
-        self.spare = convert_int_to_bits(num=0, bits_count=3)
-        # RAIM - not in use (0)
-        self.raim = convert_int_to_bits(num=0, bits_count=1)
-        # Dummy SOTDMA data
-        self.radio_status = '0010100000111110011'
-
-    @property
-    def nav_status(self) -> str:
-        return self._nav_status
-
-    @nav_status.setter
-    def nav_status(self, nav_status) -> None:
-        self._nav_status = convert_int_to_bits(num=nav_status, bits_count=4)
-
-    @property
-    def lon(self) -> str:
-        return self._lon
-
-    @lon.setter
-    def lon(self, lon) -> None:
-        self._lon = convert_int_to_bits(num=int(lon * 600000), bits_count=28, signed=True)
-
-    @property
-    def lat(self) -> str:
-        return self._lat
-
-    @lat.setter
-    def lat(self, lat) -> None:
-        self._lat = convert_int_to_bits(num=int(lat * 600000), bits_count=27, signed=True)
-
-    @property
-    def course(self) -> str:
-        return self._course
-
-    @course.setter
-    def course(self, course) -> None:
-        if course < 0 or course > 360:
-            raise ValueError(f'Invalid course {course}. Should be in 0-360 range.')
-        self._course = convert_int_to_bits(num=int(course * 10), bits_count=12)
-
-    @property
-    def true_heading(self) -> str:
-        return self._true_heading
-
-    @true_heading.setter
-    def true_heading(self, true_heading) -> None:
-        if true_heading != 511 and (true_heading < 0 or true_heading > 360):
-            raise ValueError(f'Invalid heading {true_heading}. Should be in 0-360 range.')
-        self._true_heading = convert_int_to_bits(num=true_heading, bits_count=9)
-
-    @property
-    def speed(self) -> str:
-        return self._speed
-
-    @speed.setter
-    def speed(self, speed) -> None:
-        if speed < 0 or speed > 102.2:
-            raise ValueError(f'Invalid speed {speed}. Should be in 0-102.2 range.')
-        self._speed = convert_int_to_bits(num=int(speed * 10), bits_count=10)
-
-    @property
-    def timestamp(self) -> str:
-        return self._timestamp
-
-    @timestamp.setter
-    def timestamp(self, timestamp) -> None:
-        if timestamp not in range(0, 61):
-            raise ValueError(f'Invalid timestamp {timestamp}. Should be in 0-60 range.')
-        self._timestamp = convert_int_to_bits(num=timestamp, bits_count=6)
-
-    @property
-    def payload_bits(self) -> str:
-        """
-        Returns msg payload as a bit string.
-        """
-        return f'{self.msg_type}{self.repeat_indicator}{self.mmsi}{self.nav_status}{self.rot}{self.speed}' \
-            f'{self.accuracy}{self.lon}{self.lat}{self.course}{self.true_heading}{self.timestamp}{self.maneuver}' \
-            f'{self.spare}{self.raim}{self.radio_status}'
-
-    def __str__(self) -> str:
-        return f'{self.encode()}'
 
 
 class AISMsgType5(AISMsg):
@@ -325,7 +345,7 @@ class NMEAMessage:
     """
     Class represents NMEA message. It can consist of a single sequence or multiple sequences.
     """
-    def __init__(self, payload: Union[AISMsgType1, AISMsgType5]) -> None:
+    def __init__(self, payload: Union[AISMsgPayloadType1, AISMsgType5]) -> None:
         self.nmea_msg_type = 'AIVDM'
         self.payload = payload
         self.payload_parts: list = textwrap.wrap(payload.encode(), 60)
@@ -353,25 +373,34 @@ class NMEAMessage:
 
 if __name__ == '__main__':
     # Only for tests
-    dimension_dict = {
-        'to_bow': 225,
-        'to_stern': 70,
-        'to_port': 1,
-        'to_starboard': 31
-    }
-    eta_dict = {
-        'month': 5,
-        'day': 15,
-        'hour': 14,
-        'minute': 0
-    }
-    msg = AISMsgType5(mmsi=205344990,
-                      imo=9134270,
-                      call_sign='3FOF8',
-                      ship_name='EVER DIADEM',
-                      ship_type=70,
-                      dimension=dimension_dict,
-                      eta=eta_dict,
-                      draught=12.2,
-                      destination='NEW YORK')
-    print(msg.encode())
+    # dimension_dict = {
+    #     'to_bow': 225,
+    #     'to_stern': 70,
+    #     'to_port': 1,
+    #     'to_starboard': 31
+    # }
+    # eta_dict = {
+    #     'month': 5,
+    #     'day': 15,
+    #     'hour': 14,
+    #     'minute': 0
+    # }
+    # msg = AISMsgType5(mmsi=205344990,
+    #                   imo=9134270,
+    #                   call_sign='3FOF8',
+    #                   ship_name='EVER DIADEM',
+    #                   ship_type=70,
+    #                   dimension=dimension_dict,
+    #                   eta=eta_dict,
+    #                   draught=12.2,
+    #                   destination='NEW YORK')
+    # print(msg.encode())
+    msg_payload = AISMsgPayloadType1(mmsi=205344990,
+                                     speed=0,
+                                     course=110.7,
+                                     lon=4.407046666667,
+                                     lat=51.229636666667,
+                                     nav_status=15,
+                                     timestamp=40)
+    print(msg_payload.dict())
+    # print(msg_payload._constants_bits)

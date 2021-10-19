@@ -5,7 +5,7 @@ from pydantic import BaseModel, validator
 
 from nmea_utils import add_padding
 from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii, ShipDimension, ShipEta
-from nmea_msg import AISMsgType1, AISMsgType5, NMEAMessage
+from nmea_msg import AISMsgPayloadType1, AISMsgType5, NMEAMessage
 from constants import NavigationStatusEnum, ShipTypeEnum
 
 
@@ -112,18 +112,18 @@ class AISTrack(BaseModel):
             msgs += NMEAMessage(payload=payload).get_sentences()
         return msgs
 
-    def generate_msg_type_1(self) -> AISMsgType1:
+    def generate_msg_type_1(self) -> AISMsgPayloadType1:
         """
         Generates AIS Type 1 msg object.
         """
-        msg = AISMsgType1(mmsi=self.mmsi,
-                          lon=self.lon,
-                          lat=self.lat,
-                          course=self.course,
-                          true_heading=self.true_heading,
-                          nav_status=self.nav_status,
-                          speed=self.speed,
-                          timestamp=self.timestamp)
+        msg = AISMsgPayloadType1(mmsi=self.mmsi,
+                                 lon=self.lon,
+                                 lat=self.lat,
+                                 course=self.course,
+                                 true_heading=self.true_heading,
+                                 nav_status=self.nav_status,
+                                 speed=self.speed,
+                                 timestamp=self.timestamp)
         return msg
 
     def generate_msg_type_5(self) -> AISMsgType5:
