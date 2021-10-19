@@ -14,10 +14,13 @@ class ShipDimension(BaseModel):
     to_starboard: int = 0
 
     class Config:
+        """
+        Pydantic config class.
+        """
         validate_assignment = True
 
     @root_validator(pre=True)
-    def check_attrs_omitted(cls, values):
+    def check_attrs_omitted(cls, values) -> dict:
         """
         Set all attributes to 0 if any of the attributes are not passed in.
         """
@@ -29,7 +32,7 @@ class ShipDimension(BaseModel):
         return values
 
     @validator('to_bow', 'to_stern')
-    def check_to_bow_and_to_stern_value(cls, value, field):
+    def check_to_bow_and_to_stern_value(cls, value, field) -> int:
         if value < 0:
             raise ValueError(f'Invalid {field.name} {value}. Should be 0 or greater.')
         elif value > 511:
@@ -37,7 +40,7 @@ class ShipDimension(BaseModel):
         return value
 
     @validator('to_port', 'to_starboard')
-    def check_to_port_and_to_starboard_value(cls, value, field):
+    def check_to_port_and_to_starboard_value(cls, value, field) -> int:
         if value < 0:
             raise ValueError(f'Invalid {field.name} {value}. Should be 0 or greater.')
         elif value > 63:
@@ -64,6 +67,9 @@ class ShipEta(BaseModel):
     minute: int = 60
 
     class Config:
+        """
+        Pydantic config class.
+        """
         validate_assignment = True
 
     @validator('month')
@@ -137,5 +143,3 @@ def verify_sixbit_ascii(text: str) -> bool:
         if char not in sixbit_ascii:
             return False
     return True
-
-

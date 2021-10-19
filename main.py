@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Any
 import json
 import sys
 import time
 
-from pydantic import error_wrappers
+from pydantic import ValidationError
 
 from ais_track import AISTrackList
 from nmea_stream import UDPStream
@@ -30,8 +30,13 @@ class AISDataTx:
             print(f'Error: File {self.tracks_file} does not exist!')
         except json.decoder.JSONDecodeError as error:
             print(f'Error: File {self.tracks_file} - {error}')
-        except error_wrappers.ValidationError as error:
-            print(f'Error: File {self.tracks_file} - \"{error.errors()[0]["loc"][-1]}\" {error.errors()[0]["msg"]}')
+        except ValidationError as error:
+            # Custom error msg
+            error_data: List[Dict[str, Any]] = error.errors()
+            error_msg: str = error_data[0]['msg']
+            track_no: int = error_data[0]['loc'][1] + 1
+            track_field: str = error_data[0]['loc'][-1]
+            print(f'Error: File "{self.tracks_file}" - check track with no {track_no}, "{track_field}" {error_msg}')
         sys.exit()
 
     def run(self, clients: Dict[str, int], timer: int = 30):

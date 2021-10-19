@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Union
 from datetime import datetime
 
 from pydantic import BaseModel, validator
@@ -19,32 +19,35 @@ class AISTrack(BaseModel):
     lat: float
     speed: float
     course: float
-    true_heading: int = 511
-    imo: int = 0000000
+    true_heading: Optional[int] = 511
+    imo: Optional[int] = 0000000
     call_sign: str
     ship_name: str
     ship_type: ShipTypeEnum
-    dimension: ShipDimension = ShipDimension()
-    eta: ShipEta = ShipEta()
+    dimension: Optional[ShipDimension] = ShipDimension()
+    eta: Optional[ShipEta] = ShipEta()
     draught: float = 0
     destination: str
-    timestamp: int = 60
+    timestamp: Optional[int] = 60
     _updated_at: float = datetime.utcnow().timestamp()
 
     class Config:
+        """
+        Pydantic config class.
+        """
         validate_assignment = True
         underscore_attrs_are_private = True
 
     @validator('mmsi')
-    def check_mmsi_value(cls, value):
+    def check_mmsi_value(cls, value) -> int:
         if len(str(value)) != 9:
-            raise ValueError(f'value {value} is invalid. Should consist of 9 digits.')
+            raise ValueError(f'field value {value} is invalid. Should consist of 9 digits.')
         elif not check_mmsi_mid_code(value):
-            raise ValueError(f'value {value} is invalid. Wrong MID code.')
+            raise ValueError(f'field value {value} is invalid. Wrong MID code.')
         return value
 
     @validator('lon', 'lat', 'speed', 'timestamp')
-    def check_lon_lat_speed_timestamp_values(cls, value, field):
+    def check_lon_lat_speed_timestamp_values(cls, value, field) -> Union[float, int]:
         valid_values = {
             'lon': {'min': -180, 'max': 180},
             'lat': {'min': -90, 'max': 90},
@@ -54,28 +57,28 @@ class AISTrack(BaseModel):
         value_min = valid_values[field.name]['min']
         value_max = valid_values[field.name]['max']
         if value < value_min or value > value_max:
-            raise ValueError(f'value {value} is invalid. Should be in {value_min}-{value_max} range.')
+            raise ValueError(f'field value {value} is invalid. Should be in {value_min} to {value_max} range.')
         return value
 
     @validator('course', 'true_heading')
-    def check_course_value(cls, value, field):
+    def check_course_value(cls, value, field) -> float:
         if field.name == 'true_heading' and value == 511:
             # Default true_heading value
             return value
         if value < 0 or value > 360:
-            raise ValueError(f'value {value} is invalid. Should be in 0-360 range.')
+            raise ValueError(f'field value {value} is invalid. Should be in 0 to 360 range.')
         return value
 
     @validator('imo')
-    def check_imo_value(cls, value, field):
+    def check_imo_value(cls, value) -> int:
         if len(str(value)) != 7:
-            raise ValueError(f'value {value} is invalid. Should consist of 7 digits.')
+            raise ValueError(f'field value {value} is invalid. Should consist of 7 digits.')
         elif not verify_imo(imo=value):
-            raise ValueError(f'value {value} is invalid. Wrong IMO checksum.')
+            raise ValueError(f'field value {value} is invalid. Wrong IMO checksum.')
         return value
 
     @validator('call_sign', 'ship_name', 'destination')
-    def check_sixbit_text_value(cls, value, field):
+    def check_sixbit_text_value(cls, value, field) -> str:
         field_to_chars_count = {
             'call_sign': 7,
             'ship_name': 20,
@@ -85,16 +88,16 @@ class AISTrack(BaseModel):
         if len(value) > required_chars_count:
             value = value[:required_chars_count]
         elif not verify_sixbit_ascii(value):
-            raise ValueError(f'value {value} is invalid. Wrong sixbit ASCII chars.')
+            raise ValueError(f'field value {value} is invalid. Wrong sixbit ASCII chars.')
         elif len(value) < required_chars_count:
             # Add padding, if necessary
             value = add_padding(text=value, required_length=required_chars_count)
         return value
 
     @validator('draught')
-    def check_draught_value(cls, value, field):
+    def check_draught_value(cls, value) -> float:
         if value < 0:
-            raise ValueError(f'value {value} is invalid. Should be 0 or greater.')
+            raise ValueError(f'field value {value} is invalid. Should be 0 or greater.')
         elif value > 25.5:
             value = 25.5
         return value
