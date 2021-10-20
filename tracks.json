@@ -1,0 +1,148 @@
+{
+  "tracks": [
+    {
+      "mmsi": 205344990,
+      "imo": 9134270,
+      "nav_status": 1,
+      "lat": 55.3184,
+      "lon": 17.5711,
+      "speed": 0.0,
+      "course": 180.0,
+      "true_heading": 176,
+      "call_sign": "3FOF8",
+      "ship_name": "EVER DIADEM",
+      "ship_type": 70,
+      "dimension": {
+        "to_bow": 225,
+        "to_stern": 70,
+        "to_port": 1,
+        "to_starboard": 31
+      },
+      "eta": {
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 0
+      },
+      "draught": 12.2,
+      "destination": "NEW YORK",
+      "timestamp": 40
+    },
+    {
+      "mmsi": 311000843,
+      "imo": 9215505,
+      "nav_status": 0,
+      "lat": 55.3184,
+      "lon": 18.68,
+      "speed": 35.0,
+      "course": 300.0,
+      "true_heading": 299,
+      "call_sign": "C6EB2",
+      "ship_name": "STENA NORDICA",
+      "ship_type": 60,
+      "dimension": {
+        "to_bow": 225,
+        "to_stern": 70,
+        "to_port": 1,
+        "to_starboard": 31
+      },
+      "eta": {
+        "month": 5,
+        "day": 15,
+        "hour": 14,
+        "minute": 0
+      },
+      "draught": 12.2,
+      "destination": "NEW YORK",
+      "timestamp": 60
+    },
+    {
+      "mmsi": 261187330,
+      "nav_status": 0,
+      "lat": 54.4385,
+      "lon": 18.7611,
+      "speed": 11.0,
+      "course": 215.0,
+      "true_heading": 215,
+      "call_sign": "SR7330",
+      "ship_name": "KAMA",
+      "ship_type": 36,
+      "draught": 12.2,
+      "destination": "GDANSK"
+    },
+    {
+      "mmsi": 261001310,
+      "nav_status": 7,
+      "lat": 54.6775,
+      "lon": 18.7930,
+      "speed": 9.0,
+      "course": 309.0,
+      "true_heading": 308,
+      "call_sign": "SPK2065",
+      "ship_name": "LEB 65",
+      "ship_type": 30,
+      "dimension": {
+        "to_bow": 10,
+        "to_stern": 7,
+        "to_port": 2,
+        "to_starboard": 3
+      },
+      "eta": {
+        "month": 10,
+        "day": 25,
+        "hour": 10,
+        "minute": 0
+      },
+      "draught": 1.8,
+      "destination": "JASTARNIA"
+    },
+    {
+      "mmsi": 305476000,
+      "imo": 9155884,
+      "nav_status": 0,
+      "lat": 54.9534,
+      "lon": 17.9754,
+      "speed": 10.4,
+      "course": 271.0,
+      "true_heading": 271,
+      "call_sign": "V2EM3",
+      "ship_name": "KARION",
+      "ship_type": 70,
+      "dimension": {
+        "to_bow": 80,
+        "to_stern": 10,
+        "to_port": 7,
+        "to_starboard": 7
+      },
+      "eta": {
+        "month": 11,
+        "day": 1,
+        "hour": 11,
+        "minute": 0
+      },
+      "draught": 4.6,
+      "destination": "SEMMA"
+    },
+    {
+      "mmsi": 257079000,
+      "imo": 9283978,
+      "nav_status": 1,
+      "lat": 54.8145,
+      "lon": 19.0157,
+      "speed": 0,
+      "course": 10.2,
+      "true_heading": 10.2,
+      "call_sign": "LAOK8",
+      "ship_name": "STENBERG",
+      "ship_type": 80,
+      "dimension": {
+        "to_bow": 122,
+        "to_stern": 20,
+        "to_port": 11,
+        "to_starboard": 12
+      },
+      "draught": 8.5,
+      "destination": "KARLSKRONA"
+    }
+  ]
+}

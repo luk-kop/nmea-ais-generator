@@ -26,11 +26,12 @@ class MmsiCountryEnum(IntEnum):
     Sweden = 265
     Turkey = 271
     Ukraine = 272
-    RussianFederation = 273
+    Russian_Federation = 273
     Latvia = 275
     Estonia = 276
     Lithuania = 277
     Slovenia = 278
+    Antigua_Barbuda = 305
     Bahamas = 311
     Canada = 316
     USA = 338
