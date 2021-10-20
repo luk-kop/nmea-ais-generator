@@ -1,6 +1,14 @@
+from datetime import datetime
+
 import pytest
 
-from ais_utils import get_first_3_digits, check_mmsi_mid_code, verify_imo, ShipDimension
+from ais_utils import (
+    get_first_3_digits,
+    check_mmsi_mid_code,
+    verify_imo, ShipDimension,
+    calculate_distance,
+    calculate_new_position
+)
 
 
 def test_get_first_3_digits():
@@ -97,3 +105,20 @@ def test_ship_dimension_attrs_omitted():
     assert dim.to_stern == 0
     assert dim.to_port == 0
     assert dim.to_starboard == 0
+
+
+def test_calculate_distance():
+    # Use the last_timestamp 60 seconds before the current_timestamp
+    current_timestamp = datetime.utcnow().timestamp()
+    last_timestamp = current_timestamp - 60
+    distance = calculate_distance(last_timestamp=last_timestamp, current_timestamp=current_timestamp, speed=10)
+    assert distance == 308.667
+
+
+def test_calculate_new_position():
+    lon_new, lat_new = calculate_new_position(lon_start=-71.-(7./60.),
+                                              lat_start=42.+(15./60.),
+                                              course=-66.531,
+                                              distance=4164192.708)
+    assert round(lon_new, 3) == -123.685
+    assert round(lat_new, 3) == 45.516

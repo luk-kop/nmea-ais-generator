@@ -3,6 +3,7 @@ from typing import Dict, List, Any
 import json
 import sys
 import time
+from datetime import datetime
 
 from pydantic import ValidationError
 
@@ -11,6 +12,10 @@ from nmea_stream import UDPStream
 
 
 class AISDataTx:
+    """
+    Class represents generated AIS data for clients (customers).
+    The AIS data is sent as UDP packets to clients in NMEA 0183 format and optionally can be displayed on CLI terminal.
+    """
     def __init__(self, tracks_data_file: str = 'tracks.json', save_tracks_data: bool = False):
         self.tracks_file = tracks_data_file
         self.track_list = None
@@ -52,7 +57,11 @@ class AISDataTx:
                 timer_start = time.perf_counter()
                 nmea_msgs = []
                 for track in self.track_list.tracks:
-                    # track.update_position()
+                    # Update AIS track position with each while loop run
+                    current_timestamp = datetime.utcnow().timestamp()
+                    if track.speed > 0:
+                        # Updated only if track in move
+                        track.update_position(current_timestamp=current_timestamp)
                     nmea_msgs += track.generate_nmea()
                 udp.run(data=nmea_msgs)
                 time.sleep(timer - (time.perf_counter() - timer_start))
@@ -96,4 +105,4 @@ if __name__ == '__main__':
         },
     ]
 
-    AISDataTx().run(clients=clients, timer=20)
+    AISDataTx().run(clients=clients, timer=10)

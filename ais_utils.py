@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from pydantic import BaseModel, validator, root_validator
+from pyproj import Geod
 
 from constants import MmsiCountryEnum
 from nmea_utils import convert_int_to_bits
@@ -143,3 +146,27 @@ def verify_sixbit_ascii(text: str) -> bool:
         if char not in sixbit_ascii:
             return False
     return True
+
+
+def calculate_distance(last_timestamp: float, current_timestamp: float, speed: int) -> int:
+    """
+    Calculates the distance passed after the indicated time (in meters).
+    """
+    # The time that has elapsed since the last position fix
+    time_delta = (current_timestamp - last_timestamp)
+    # Knots to m/s conversion.
+    speed_ms = speed * 0.514444444
+    # Distance in meters - rounded to 3 digits from the decimal point
+    return round(speed_ms * time_delta, 3)
+
+
+def calculate_new_position(lon_start: float, lat_start: float, course: float, distance: float) -> tuple:
+    """
+    Calculates new coordinates based on distance and azimuth (ship course).
+    """
+    # Use WGS84 ellipsoid.
+    g = Geod(ellps='WGS84')
+    # Forward transformation - returns longitude, latitude, back azimuth of terminus points
+    lon_end, lat_end, back_azimuth = g.fwd(lon_start, lat_start, course, distance)
+    return lon_end, lat_end
+

@@ -4,7 +4,15 @@ from datetime import datetime
 from pydantic import BaseModel, validator
 
 from nmea_utils import add_padding
-from ais_utils import check_mmsi_mid_code, verify_imo, verify_sixbit_ascii, ShipDimension, ShipEta
+from ais_utils import (
+    check_mmsi_mid_code,
+    verify_imo,
+    verify_sixbit_ascii,
+    ShipDimension,
+    ShipEta,
+    calculate_distance,
+    calculate_new_position
+)
 from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5, NMEAMessage
 from constants import NavigationStatusEnum, ShipTypeEnum, FieldCharsCountEnum
 
@@ -135,6 +143,24 @@ class AISTrack(BaseModel):
                                  draught=self.draught,
                                  destination=self.destination)
         return msg
+
+    def update_position(self, current_timestamp: float) -> None:
+        """
+        Updates the AIS track position. The position will be updated every time the method is called.
+        """
+        # Calculate distance to new position
+        distance = calculate_distance(last_timestamp=self._updated_at,
+                                      current_timestamp=current_timestamp,
+                                      speed=self.speed)
+        # Update position update timestamp
+        self._updated_at = current_timestamp
+        lon_new, lat_new = calculate_new_position(lon_start=self.lon,
+                                                  lat_start=self.lat,
+                                                  course=self.course,
+                                                  distance=distance)
+        # Update AIS track coordinates
+        self.lon = lon_new
+        self.lat = lat_new
 
 
 class AISTrackList(BaseModel):
