@@ -16,11 +16,12 @@ class AISDataTx:
     Class represents generated AIS data for clients (customers).
     The AIS data is sent as UDP packets to clients in NMEA 0183 format and optionally can be displayed on CLI terminal.
     """
-    def __init__(self, tracks_data_file: str = 'tracks.json', save_tracks_data: bool = False):
-        self.tracks_file = tracks_data_file
+    def __init__(self, tracks_file: str = 'tracks.json', terminal_output: bool = False, save_tracks: bool = False):
+        self.tracks_file = tracks_file
         self.track_list = None
+        self.terminal_output = terminal_output
         # Save current AIS tracks data to new JSON file
-        self.save_tracks_data = save_tracks_data
+        self.save_tracks = save_tracks
 
     def load_tracks_from_file(self) -> None:
         """
@@ -51,7 +52,9 @@ class AISDataTx:
         self.load_tracks_from_file()
         udp = UDPStream(clients=clients)
         print('Press "Ctrl + c" to exit\n')
-        print(f'Sending NMEA AIS data...')
+        print(f'Sending NMEA AIS data via UDP stream...\n')
+        if self.terminal_output:
+            print('NMEA AIS data output:')
         while True:
             try:
                 timer_start = time.perf_counter()
@@ -63,7 +66,13 @@ class AISDataTx:
                         # Updated only if track in move
                         track.update_position(current_timestamp=current_timestamp)
                     nmea_msgs += track.generate_nmea()
+                # Send UDP packets with NMEA data
                 udp.run(data=nmea_msgs)
+                # Print NMEA dat to terminal output
+                if self.terminal_output:
+                    for msg in nmea_msgs:
+                        print(msg, end='')
+                        time.sleep(0.02)
                 time.sleep(timer - (time.perf_counter() - timer_start))
             except KeyboardInterrupt:
                 print('\nClosing the script...\n')
@@ -74,7 +83,7 @@ class AISDataTx:
         Dumps AIS tracks to new JSON file.
         """
         path = Path(filename)
-        if self.save_tracks_data and self.track_list:
+        if self.save_tracks and self.track_list:
             # Strip selected AIS track attrs values
             tracks = self.track_list.dict()['tracks']
             for track in tracks:
@@ -105,4 +114,4 @@ if __name__ == '__main__':
         },
     ]
 
-    AISDataTx().run(clients=clients, timer=10)
+    AISDataTx(terminal_output=True).run(clients=clients, timer=10)
