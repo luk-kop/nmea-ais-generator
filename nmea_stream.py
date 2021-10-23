@@ -1,16 +1,18 @@
-from typing import List, Dict, Any
+from typing import List
 import socket
 import time
 import sys
 import threading
+
+from ais_utils import Clients
 
 
 class UDPStream:
     """
     Class represents a stream of UDP data sent to selected hosts.
     """
-    def __init__(self, clients: List[Dict[str, Any]]) -> None:
-        self.clients = clients
+    def __init__(self, clients: Clients) -> None:
+        self.clients_list = clients
         self.data_to_send = []
 
     def run(self, data: List[str]) -> None:
@@ -18,8 +20,8 @@ class UDPStream:
         Starts UDP stream tx.
         """
         self.data_to_send = data
-        for client in self.clients:
-            host, port = client['host'], client['port']
+        for client in self.clients_list.clients:
+            host, port = client.host, client.port
             # Send data to each host:port in a separate thread
             threading.Thread(target=self.send_data,
                              kwargs={'host': host, 'port': port},

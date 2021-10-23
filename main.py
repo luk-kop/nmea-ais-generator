@@ -8,6 +8,7 @@ from datetime import datetime
 from pydantic import ValidationError
 
 from ais_track import AISTrackList
+from ais_utils import Clients, Client
 from nmea_stream import UDPStream
 
 
@@ -18,39 +19,46 @@ class AISDataTx:
     """
     def __init__(self, tracks_file: str = 'tracks.json', terminal_output: bool = False, save_tracks: bool = False):
         self.tracks_file = tracks_file
+        self.clients_file = 'clients.json'
         self.track_list = None
+        self.clients = None
         self.terminal_output = terminal_output
         # Save current AIS tracks data to new JSON file
         self.save_tracks = save_tracks
 
-    def load_tracks_from_file(self) -> None:
+    def load_files(self) -> None:
         """
-        Loads AIS tracks from JSON file.
+        Loads clients and AIS tracks from JSON files.
         """
-        path = Path(self.tracks_file)
         try:
-            track_list = AISTrackList.parse_file(path)
+            # Load clients_file
+            file_name = self.clients_file
+            clients_list = Clients.parse_file(Path(file_name))
+            # Load tracks_file
+            file_name = self.tracks_file
+            track_list = AISTrackList.parse_file(Path(file_name))
+            self.clients = clients_list
             self.track_list = track_list
             return
         except FileNotFoundError:
-            print(f'Error: File {self.tracks_file} does not exist!')
+            print(f'Error: File {file_name} does not exist!')
         except json.decoder.JSONDecodeError as error:
-            print(f'Error: File {self.tracks_file} - {error}')
+            print(f'Error: File {file_name} - {error}')
         except ValidationError as error:
             # Custom error msg
             error_data: List[Dict[str, Any]] = error.errors()
             error_msg: str = error_data[0]['msg']
-            track_no: int = error_data[0]['loc'][1] + 1
-            track_field: str = error_data[0]['loc'][-1]
-            print(f'Error: File "{self.tracks_file}" - check track with no {track_no}, "{track_field}" {error_msg}')
+            item_no: int = error_data[0]['loc'][1] + 1
+            item_field: str = error_data[0]['loc'][-1]
+            print(f'Error: File "{file_name}" - check item with no {item_no}, "{item_field}" {error_msg}')
         sys.exit()
 
-    def run(self, clients: Dict[str, int], timer: int = 30):
+    def run(self, timer: int = 30):
         """
         Starts the process of sending AIS tracks data to selected hosts.
         """
-        self.load_tracks_from_file()
-        udp = UDPStream(clients=clients)
+        self.load_files()
+        udp = UDPStream(clients=self.clients)
         print('Press "Ctrl + c" to exit\n')
         print(f'Sending NMEA AIS data via UDP stream...\n')
         if self.terminal_output:
@@ -95,23 +103,4 @@ class AISDataTx:
 
 
 if __name__ == '__main__':
-    clients = [
-        {
-            'host': '127.0.0.1',
-            'port': 1111
-        },
-        {
-            'host': '127.0.0.1',
-            'port': 1112
-        },
-        {
-            'host': '127.0.0.1',
-            'port': 1113
-        },
-        {
-            'host': '172.16.208.131',
-            'port': 1002
-        },
-    ]
-
-    AISDataTx(terminal_output=True).run(clients=clients, timer=10)
+    AISDataTx(terminal_output=True).run(timer=10)
