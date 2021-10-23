@@ -1,6 +1,6 @@
-from datetime import datetime
+from ipaddress import IPv4Address
 
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, validator, root_validator, conint, conlist
 from pyproj import Geod
 
 from constants import MmsiCountryEnum
@@ -106,6 +106,28 @@ class ShipEta(BaseModel):
             eta_bits += convert_int_to_bits(num=value, bits_count=5)
         eta_bits += convert_int_to_bits(num=self.minute, bits_count=6)
         return eta_bits
+
+
+class Client(BaseModel):
+    """
+    Class represents a single client to which a UDP stream will be sent.
+    """
+    host: IPv4Address
+    port: conint(gt=0, lt=65536)
+
+    @validator('host')
+    def ip_address_obj_to_str(cls, value):
+        """
+        Converts IPv4Address object to str representation.
+        """
+        return str(value)
+
+
+class Clients(BaseModel):
+    """
+    Class represents list of Client objects.
+    """
+    clients: conlist(Client, min_items=1, max_items=10)
 
 
 def get_first_3_digits(value: int) -> int:

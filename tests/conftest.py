@@ -1,7 +1,7 @@
 from pytest import fixture
 
 from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
-from ais_utils import ShipDimension, ShipEta
+from ais_utils import ShipDimension, ShipEta, Client
 
 
 @fixture
@@ -74,3 +74,8 @@ def dummy_ais_tracks_list_single(dummy_ship_dimension, dummy_ship_eta):
         }
     ]
     return tracks
+
+
+@fixture
+def dummy_client():
+    return Client(host='192.168.1.1', port=1111)

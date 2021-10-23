@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from pydantic import ValidationError
 import pytest
 
 from ais_utils import (
@@ -7,7 +8,9 @@ from ais_utils import (
     check_mmsi_mid_code,
     verify_imo, ShipDimension,
     calculate_distance,
-    calculate_new_position
+    calculate_new_position,
+    Client,
+    Clients
 )
 
 
@@ -122,3 +125,53 @@ def test_calculate_new_position():
                                               distance=4164192.708)
     assert round(lon_new, 3) == -123.685
     assert round(lat_new, 3) == 45.516
+
+
+def test_client_valid(dummy_client):
+    assert dummy_client.host == '192.168.1.1'
+    assert dummy_client.port == 1111
+
+
+def test_client_invalid_host():
+    with pytest.raises(ValidationError):
+        client = Client(host='invalid-ip', port=1111)
+
+
+def test_client_invalid_port_min():
+    with pytest.raises(ValidationError):
+        client = Client(host='192.168.1.1', port=0)
+
+
+def test_client_invalid_port_max():
+    with pytest.raises(ValidationError):
+        client = Client(host='192.168.1.1', port=65536)
+
+
+def test_clients_single(dummy_client):
+    clients_list = [dummy_client]
+    clients_obj = Clients(clients=clients_list)
+    assert len(clients_obj.clients) == 1
+
+
+def test_clients_multiple(dummy_client):
+    clients_list = [dummy_client for _ in range(3)]
+    clients_obj = Clients(clients=clients_list)
+    assert len(clients_obj.clients) == 3
+
+
+def test_clients_multiple_max(dummy_client):
+    clients_list = [dummy_client for _ in range(10)]
+    clients_obj = Clients(clients=clients_list)
+    assert len(clients_obj.clients) == 10
+
+
+def test_clients_multiple_max_invalid(dummy_client):
+    clients_list = [dummy_client for _ in range(11)]
+    with pytest.raises(ValidationError):
+        Clients(clients=clients_list)
+
+
+def test_clients_multiple_min_invalid():
+    clients_list = []
+    with pytest.raises(ValidationError):
+        Clients(clients=clients_list)
