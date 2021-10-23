@@ -1,29 +1,35 @@
 from enum import IntEnum
-from typing import Dict
+from typing import Dict, List
+
+from aenum import MultiValueEnum
 
 
-class MmsiCountryEnum(IntEnum):
+class MmsiCountryEnum(MultiValueEnum):
     """
     Maritime Identification Digits (MID). Only selected countries are listed.
     For all codes see: https://www.itu.int/en/ITU-R/terrestrial/fmd/Pages/mid.aspx
     """
+    Antigua_Barbuda = 305
+    Bahamas = 308, 309, 311
     Belgium = 205
-    Germany = 211
-    Denmark = 219
-    Spain = 224
-    France = 226
+    Canada = 316
+    Germany = 211, 218
+    Denmark = 219, 220
+    Spain = 224, 225
+    France = 226, 227, 228
     Finland = 230
-    UK = 232
-    Greece = 237
-    Netherlands = 244
+    UK = 232, 233, 234, 235
+    Greece = 237, 239, 240, 241
+    Netherlands = 244, 245, 246
     Italy = 247
     Ireland = 250
     Iceland = 251
-    Norway = 257
+    Malta = 248, 249
+    Norway = 257, 258, 259
     Poland = 261
     Portugal = 263
     Romania = 264
-    Sweden = 265
+    Sweden = 265, 266
     Turkey = 271
     Ukraine = 272
     Russian_Federation = 273
@@ -31,15 +37,26 @@ class MmsiCountryEnum(IntEnum):
     Estonia = 276
     Lithuania = 277
     Slovenia = 278
-    Antigua_Barbuda = 305
-    Bahamas = 311
-    Canada = 316
-    USA = 338
+    USA = 338, 366, 367, 368, 369
 
     @classmethod
-    def has_value(cls, value):
-        values = set(item.value for item in cls)
+    def has_value(cls, value) -> bool:
+        values = cls.all_values()
         return value in values
+
+    @classmethod
+    def all_values(cls) -> List[int]:
+        """
+        Returns all item values (including muliti-values).
+        """
+        values_list_of_tuples = [item.values for item in cls]
+        values = []
+        for values_tuple in values_list_of_tuples:
+            for value in values_tuple:
+                values.append(value)
+        # One-liner example:
+        # values = [value for values_tuple in [item.values for item in cls] for value in values_tuple]
+        return values
 
 
 class NavigationStatusEnum(IntEnum):
@@ -59,7 +76,7 @@ class NavigationStatusEnum(IntEnum):
     Undefined = 15
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value) -> bool:
         values = set(item.value for item in cls)
         return value in values
 

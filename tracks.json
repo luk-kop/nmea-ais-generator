@@ -143,6 +143,60 @@
       },
       "draught": 8.5,
       "destination": "KARLSKRONA"
+    },
+    {
+      "mmsi": 247187700,
+      "imo": 9334856,
+      "nav_status": 0,
+      "lat": 55.1244,
+      "lon": 18.7699,
+      "speed": 16.3,
+      "course": 336,
+      "true_heading": 336,
+      "call_sign": "ICDH",
+      "ship_name": "AIDADIVA",
+      "ship_type": 60,
+      "dimension": {
+        "to_bow": 220,
+        "to_stern": 31,
+        "to_port": 16,
+        "to_starboard": 16
+      },
+      "eta": {
+        "month": 10,
+        "day": 24,
+        "hour": 7,
+        "minute": 0
+      },
+      "draught": 7.3,
+      "destination": "VISBY"
+    },
+    {
+      "mmsi": 249327000,
+      "imo": 9487603,
+      "nav_status": 0,
+      "lat": 55.9559,
+      "lon": 16.4272,
+      "speed": 9.3,
+      "course": 60,
+      "true_heading": 61,
+      "call_sign": "9HPN9",
+      "ship_name": "KAREN",
+      "ship_type": 80,
+      "dimension": {
+        "to_bow": 220,
+        "to_stern": 31,
+        "to_port": 16,
+        "to_starboard": 16
+      },
+      "eta": {
+        "month": 10,
+        "day": 9,
+        "hour": 7,
+        "minute": 7
+      },
+      "draught": 3.8,
+      "destination": "SENRK"
     }
   ]
 }
