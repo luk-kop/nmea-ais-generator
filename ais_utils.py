@@ -130,6 +130,25 @@ class Clients(BaseModel):
     clients: conlist(Client, min_items=1, max_items=10)
 
 
+class SequentialMsgId:
+    """
+    Iterator representing the sequential message ID (for multi-sentence NMEA messages).
+    """
+    def __init__(self, start: int = 0, stop: int = 9):
+        self.start = start
+        self.stop = stop
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.start > self.stop:
+            self.start = 0
+        current = self.start
+        self.start += 1
+        return current
+
+
 def get_first_3_digits(value: int) -> int:
     """
     Returns first 3 digits of given int.

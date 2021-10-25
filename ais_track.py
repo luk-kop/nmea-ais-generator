@@ -11,7 +11,8 @@ from ais_utils import (
     ShipDimension,
     ShipEta,
     calculate_distance,
-    calculate_new_position
+    calculate_new_position,
+    SequentialMsgId
 )
 from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5, NMEAMessage
 from constants import NavigationStatusEnum, ShipTypeEnum, FieldCharsCountEnum
@@ -38,6 +39,7 @@ class AISTrack(BaseModel):
     destination: str
     timestamp: Optional[int] = 60
     _updated_at: float = datetime.utcnow().timestamp()
+    _seq_msg_id: SequentialMsgId = SequentialMsgId()
 
     class Config:
         """
@@ -109,13 +111,15 @@ class AISTrack(BaseModel):
         """
         Generate list of NMEA msgs for current AISTrack.
         """
-        payloads = [self.generate_msg_type_1(), self.generate_msg_type_5()]
+        payloads = [self.generate_payload_type_1(), self.generate_payload_type_5()]
         msgs = []
+        # sequential message ID (for multi-sentence NMEA messages)
+        seq_msg_id = next(self._seq_msg_id)
         for payload in payloads:
-            msgs += NMEAMessage(payload=payload).get_sentences()
+            msgs += NMEAMessage(payload=payload).get_sentences(seq_msg_id=seq_msg_id)
         return msgs
 
-    def generate_msg_type_1(self) -> AISMsgPayloadType1:
+    def generate_payload_type_1(self) -> AISMsgPayloadType1:
         """
         Generates AIS Type 1 msg object.
         """
@@ -129,7 +133,7 @@ class AISTrack(BaseModel):
                                  timestamp=self.timestamp)
         return msg
 
-    def generate_msg_type_5(self) -> AISMsgPayloadType5:
+    def generate_payload_type_5(self) -> AISMsgPayloadType5:
         """
         Generates AIS Type 5 msg object.
         """

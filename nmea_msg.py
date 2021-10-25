@@ -232,7 +232,7 @@ class NMEAMessage:
         self.number_of_sentences = len(self.payload_parts)
         self.ais_channel = 'A'
 
-    def get_sentences(self) -> List[str]:
+    def get_sentences(self, seq_msg_id: int = 0) -> List[str]:
         """
         Return list of NMEA sentences.
         """
@@ -240,9 +240,8 @@ class NMEAMessage:
         for sentence_number, sentence_payload in enumerate(self.payload_parts, 1):
             # Number of unused bits at end of encoded data (0-5)
             fill_bits = self.payload.fill_bits if sentence_number == self.number_of_sentences else 0
-            # TODO: 0-9 generator or cache ???????
-            # Can be digit between 0-9, but will be common for both messages.
-            sequential_msg_id = '1' if self.number_of_sentences > 1 else ''
+            # Can be digit between 0-9, but is common for both messages.
+            sequential_msg_id = seq_msg_id if self.number_of_sentences > 1 else ''
             # Data from which the checksum will be calculated.
             sentence_data = f'{self.nmea_msg_type},{self.number_of_sentences},{sentence_number},{sequential_msg_id},' \
                             f'{self.ais_channel},{sentence_payload},{fill_bits}'

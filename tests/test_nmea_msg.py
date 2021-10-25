@@ -7,8 +7,8 @@ from nmea_utils import convert_ais_payload_to_bits
 def test_nmea_msg_multi_sentence(dummy_ais_msg_payload_type_5):
     nmea_msg = NMEAMessage(payload=dummy_ais_msg_payload_type_5)
     test_sentences = [
-        '!AIVDM,2,1,1,A,533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp8,0*7D\r\n',
-        '!AIVDM,2,2,1,A,88888888880,2*25\r\n'
+        '!AIVDM,2,1,0,A,533m@o`2;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp8,0*7C\r\n',
+        '!AIVDM,2,2,0,A,88888888880,2*24\r\n'
     ]
     assert nmea_msg.get_sentences() == test_sentences
 
