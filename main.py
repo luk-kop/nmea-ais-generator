@@ -4,6 +4,7 @@ import json
 import sys
 import time
 from datetime import datetime
+import argparse
 
 from pydantic import ValidationError
 
@@ -17,14 +18,14 @@ class AISDataTx:
     Class represents generated AIS data for clients (customers).
     The AIS data is sent as UDP packets to clients in NMEA 0183 format and optionally can be displayed on CLI terminal.
     """
-    def __init__(self, tracks_file: str = 'tracks.json', terminal_output: bool = False, save_tracks: bool = False):
+    def __init__(self, tracks_file: str = 'tracks.json', terminal_output: bool = False, new_tracks_file: str = ''):
         self.tracks_file = tracks_file
         self.clients_file = 'clients.json'
         self.track_list = None
         self.clients = None
         self.terminal_output = terminal_output
         # Save current AIS tracks data to new JSON file
-        self.save_tracks = save_tracks
+        self.new_tracks_file = new_tracks_file
 
     def load_files(self) -> None:
         """
@@ -83,6 +84,8 @@ class AISDataTx:
                         time.sleep(0.02)
                 time.sleep(timer - (time.perf_counter() - timer_start))
             except KeyboardInterrupt:
+                if self.new_tracks_file:
+                    pass
                 print('\nClosing the script...\n')
                 sys.exit()
 
@@ -91,7 +94,7 @@ class AISDataTx:
         Dumps AIS tracks to new JSON file.
         """
         path = Path(filename)
-        if self.save_tracks and self.track_list:
+        if self.new_tracks_file and self.track_list:
             # Strip selected AIS track attrs values
             tracks = self.track_list.dict()['tracks']
             for track in tracks:
@@ -103,4 +106,22 @@ class AISDataTx:
 
 
 if __name__ == '__main__':
-    AISDataTx(terminal_output=True).run(timer=10)
+    default_timer = 15
+
+    parser = argparse.ArgumentParser(description='The script generates NMEA AIS data')
+    parser.add_argument('-f', '--filename', default='tracks.json', type=str,
+                        help='JSON file with AIS tracks (default: tracks.json)')
+    parser.add_argument('-s', '--save', type=str, help='Save generated NMEA data to new JSON file')
+    parser.add_argument('-o', '--output', action="store_true", help='Print NMEA data on terminal output')
+    args = parser.parse_args()
+
+    # Get data from argparse
+    ais_class_attr = {}
+    if args.filename:
+        ais_class_attr['tracks_file'] = args.filename
+    if args.save:
+        ais_class_attr['new_tracks_file'] = args.save
+    if args.output:
+        ais_class_attr['terminal_output'] = args.output
+    # Run AIS emulator
+    AISDataTx(**ais_class_attr).run(timer=default_timer)
