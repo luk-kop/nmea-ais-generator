@@ -84,8 +84,10 @@ class AISDataTx:
                         time.sleep(0.02)
                 time.sleep(timer - (time.perf_counter() - timer_start))
             except KeyboardInterrupt:
-                if self.new_tracks_file:
-                    pass
+                new_tracks_file = self.new_tracks_file
+                if new_tracks_file:
+                    print(f'\nSaving AIS data to "{new_tracks_file}" file...')
+                    self.save_tracks_to_new_file(filename=new_tracks_file)
                 print('\nClosing the script...\n')
                 sys.exit()
 
@@ -95,14 +97,19 @@ class AISDataTx:
         """
         path = Path(filename)
         if self.new_tracks_file and self.track_list:
-            # Strip selected AIS track attrs values
-            tracks = self.track_list.dict()['tracks']
+            # Convert AISTrackList model to dictionary & exclude not set fields or with default values
+            tracks: List[Dict] = self.track_list.dict(exclude_unset=True)['tracks']
+            # Strip selected AIS track attrs (model fields) values
             for track in tracks:
                 values_to_strip = ['ship_name', 'destination', 'call_sign']
                 for string in values_to_strip:
                     track[string] = track[string].strip()
+            # Dump data as a dict
+            tracks_to_dump = {
+                'tracks': tracks
+            }
             with open(path, 'w') as write_file:
-                json.dump(tracks, write_file, indent=4)
+                json.dump(tracks_to_dump, write_file, indent=4)
 
 
 if __name__ == '__main__':
