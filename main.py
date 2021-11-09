@@ -115,11 +115,13 @@ class AISDataTx:
 if __name__ == '__main__':
     default_timer = 15
 
-    parser = argparse.ArgumentParser(description='The script generates NMEA AIS data')
+    parser = argparse.ArgumentParser(description='The NMEA AIS data generating script')
     parser.add_argument('-f', '--filename', default='tracks.json', type=str,
-                        help='JSON file with AIS tracks (default: tracks.json)')
-    parser.add_argument('-s', '--save', type=str, help='Save generated NMEA data to new JSON file')
-    parser.add_argument('-o', '--output', action="store_true", help='Print NMEA data on terminal output')
+                        help='JSON filename with initial AIS tracks data (default: tracks.json)')
+    parser.add_argument('-s', '--save', type=str,
+                        help='JSON filename to which the updated AIS data should be saved when the script exits')
+    parser.add_argument('-o', '--output', action="store_true",
+                        help='Display NMEA AIS data on the terminal screen')
     args = parser.parse_args()
 
     # Get data from argparse
