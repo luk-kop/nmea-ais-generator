@@ -4,7 +4,7 @@ import time
 import sys
 import threading
 
-from ais_utils import Clients
+from ais.ais_utils import Clients
 
 
 class UDPStream:

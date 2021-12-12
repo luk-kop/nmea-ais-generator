@@ -1,7 +1,7 @@
 from pytest import fixture
 
-from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
-from ais_utils import ShipDimension, ShipEta, Client
+from nmea.nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
+from ais.ais_utils import ShipDimension, ShipEta, Client
 
 
 @fixture

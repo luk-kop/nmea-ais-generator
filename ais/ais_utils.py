@@ -3,8 +3,8 @@ from ipaddress import IPv4Address
 from pydantic import BaseModel, validator, root_validator, conint, conlist
 from pyproj import Geod
 
-from constants import MmsiCountryEnum
-from nmea_utils import convert_int_to_bits
+from ais.constants import MmsiCountryEnum
+from nmea.nmea_utils import convert_int_to_bits
 
 
 class ShipDimension(BaseModel):

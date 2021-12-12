@@ -4,10 +4,10 @@ from typing import Union, List, Dict
 
 from pydantic import BaseModel
 
-from nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
+from nmea.nmea_utils import convert_bits_to_int, convert_int_to_bits, get_char_of_ascii_code, convert_decimal_to_ascii_code, \
     convert_ascii_char_to_ascii6_code, add_padding, add_padding_0_bits, nmea_checksum
-from ais_utils import ShipDimension, ShipEta
-from constants import FieldBitsCountEnum, AISMsgType1ConstsEnum, NavigationStatusEnum, ShipTypeEnum, \
+from ais.ais_utils import ShipDimension, ShipEta
+from ais.constants import FieldBitsCountEnum, AISMsgType1ConstsEnum, NavigationStatusEnum, ShipTypeEnum, \
     AISMsgType5ConstsEnum, FieldCharsCountEnum
 
 

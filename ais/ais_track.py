@@ -3,8 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, validator
 
-from nmea_utils import add_padding
-from ais_utils import (
+from nmea.nmea_utils import add_padding
+from ais.ais_utils import (
     check_mmsi_mid_code,
     verify_imo,
     verify_sixbit_ascii,
@@ -14,8 +14,8 @@ from ais_utils import (
     calculate_new_position,
     SequentialMsgId
 )
-from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5, NMEAMessage
-from constants import NavigationStatusEnum, ShipTypeEnum, FieldCharsCountEnum
+from nmea.nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5, NMEAMessage
+from ais.constants import NavigationStatusEnum, ShipTypeEnum, FieldCharsCountEnum
 
 
 class AISTrack(BaseModel):

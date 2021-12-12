@@ -1,4 +1,4 @@
-from constants import MmsiCountryEnum
+from ais.constants import MmsiCountryEnum
 
 
 def test_mmsi_country_has_value_true():

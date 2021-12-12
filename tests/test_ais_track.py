@@ -1,7 +1,7 @@
 import pytest
 
-from ais_track import AISTrackList, ShipEta
-from nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
+from ais.ais_track import AISTrackList, ShipEta
+from nmea.nmea_msg import AISMsgPayloadType1, AISMsgPayloadType5
 
 
 def test_ais_track_list_single(dummy_ais_tracks_list_single):

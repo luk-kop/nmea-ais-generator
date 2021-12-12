@@ -1,7 +1,7 @@
 import pytest
 
-from nmea_msg import NMEAMessage
-from nmea_utils import convert_ais_payload_to_bits
+from nmea.nmea_msg import NMEAMessage
+from nmea.nmea_utils import convert_ais_payload_to_bits
 
 
 def test_nmea_msg_multi_sentence(dummy_ais_msg_payload_type_5):

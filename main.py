@@ -8,9 +8,9 @@ import argparse
 
 from pydantic import ValidationError
 
-from ais_track import AISTrackList
-from ais_utils import Clients, Client
-from nmea_stream import UDPStream
+from ais.ais_track import AISTrackList
+from ais.ais_utils import Clients
+from nmea.nmea_stream import UDPStream
 
 
 class AISDataTx:
@@ -18,9 +18,9 @@ class AISDataTx:
     Class represents generated AIS data for clients (customers).
     The AIS data is sent as UDP packets to clients in NMEA 0183 format and optionally can be displayed on CLI terminal.
     """
-    def __init__(self, tracks_file: str = 'tracks.json', terminal_output: bool = False, new_tracks_file: str = ''):
+    def __init__(self, tracks_file: str = 'data/tracks.json', terminal_output: bool = False, new_tracks_file: str = ''):
         self.tracks_file = tracks_file
-        self.clients_file = 'clients.json'
+        self.clients_file = 'data/clients.json'
         self.track_list = None
         self.clients = None
         self.terminal_output = terminal_output
@@ -116,8 +116,8 @@ if __name__ == '__main__':
     default_timer = 15
 
     parser = argparse.ArgumentParser(description='The NMEA AIS data generating script')
-    parser.add_argument('-f', '--filename', default='tracks.json', type=str,
-                        help='JSON filename with initial AIS tracks data (default: tracks.json)')
+    parser.add_argument('-f', '--filename', default='data/tracks.json', type=str,
+                        help='JSON filename with initial AIS tracks data (default: data/tracks.json)')
     parser.add_argument('-s', '--save', type=str,
                         help='JSON filename to which the updated AIS data should be saved when the script exits')
     parser.add_argument('-o', '--output', action="store_true",

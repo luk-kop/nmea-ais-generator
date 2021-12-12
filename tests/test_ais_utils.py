@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import ValidationError
 import pytest
 
-from ais_utils import (
+from ais.ais_utils import (
     get_first_3_digits,
     check_mmsi_mid_code,
     verify_imo, ShipDimension,
